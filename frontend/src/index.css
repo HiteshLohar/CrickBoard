@@ -1,0 +1,864 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --color-brand-50: #ecfdf5;
+    --color-brand-100: #d1fae5;
+    --color-brand-200: #a7f3d0;
+    --color-brand-300: #6ee7b7;
+    --color-brand-400: #34d399;
+    --color-brand-500: #10b981;
+    --color-brand-600: #059669;
+    --color-brand-700: #047857;
+    --color-brand-800: #065f46;
+    --color-brand-900: #064e3b;
+    --color-brand-950: #022c22;
+
+    --color-surface-light: #ffffff;
+    --color-surface-dark: #0f172a;
+
+    --color-background-light: #f8fafc;
+    --color-background-dark: #020617;
+
+    --color-border-light: #e2e8f0;
+    --color-border-dark: #1e293b;
+}
+
+@theme {
+    --color-cricket-live: #ef4444;
+    --color-cricket-wicket: #f43f5e;
+    --color-cricket-four: #3b82f6;
+    --color-cricket-six: #8b5cf6;
+    --color-cricket-success: #22c55e;
+    --color-cricket-warning: #f59e0b;
+}
+
+
+
+:root {
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    color-scheme: light;
+}
+
+html.dark {
+    color-scheme: dark;
+}
+
+html {
+    transition: background-color 200ms ease, color 200ms ease;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    min-width: 320px;
+    min-height: 100%;
+}
+
+body {
+    min-width: 320px;
+    min-height: 100vh;
+
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+
+    background-color: #f8fafc;
+    color: #0f172a;
+
+    transition:
+        background-color 200ms ease,
+        color 200ms ease;
+}
+
+html.dark body {
+    background-color: #020617;
+    color: #f8fafc;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+/* ================================
+   APP LAYOUT
+================================ */
+
+.app-layout {
+    min-height: 100vh;
+    display: flex;
+    background: #f5f7fa;
+}
+
+/* ================================
+   SIDEBAR
+================================ */
+
+.app-sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: #111827;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.sidebar-brand {
+    padding: 24px 20px;
+}
+
+.sidebar-brand h1 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+}
+
+.sidebar-link {
+    display: block;
+    padding: 12px 14px;
+    color: #d1d5db;
+    text-decoration: none;
+    border-radius: 8px;
+}
+
+.sidebar-link:hover {
+    background: #1f2937;
+    color: #ffffff;
+}
+
+.sidebar-link-active {
+    background: #374151;
+    color: #ffffff;
+}
+
+/* ================================
+   MAIN AREA
+================================ */
+
+.app-main {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ================================
+   HEADER
+================================ */
+
+.app-header {
+    min-height: 64px;
+    padding: 12px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.header-left,
+.header-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-left h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.header-user span {
+    font-weight: 600;
+}
+
+.header-user button,
+.mobile-menu-button {
+    border: 0;
+    cursor: pointer;
+}
+
+.header-user button {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: #111827;
+    color: #ffffff;
+}
+
+.mobile-menu-button {
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    background: transparent;
+    font-size: 22px;
+}
+
+/* ================================
+   CONTENT
+================================ */
+
+.app-content {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 24px;
+    flex: 1;
+}
+
+/* ================================
+   MOBILE DRAWER
+================================ */
+
+.sidebar-overlay {
+    display: none;
+}
+
+.sidebar-close-button {
+    display: none;
+}
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 767px) {
+    .app-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+
+        width: 260px;
+        height: 100vh;
+        min-height: 100vh;
+
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
+
+        overflow-y: auto;
+    }
+
+    .app-sidebar-mobile-open {
+        transform: translateX(0);
+    }
+
+    .sidebar-brand {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .sidebar-close-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 32px;
+        height: 32px;
+
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #ffffff;
+
+        font-size: 28px;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .sidebar-overlay {
+        display: block;
+
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+
+        width: 100%;
+        height: 100%;
+
+        padding: 0;
+        border: 0;
+
+        background: rgba(0, 0, 0, 0.4);
+        cursor: pointer;
+    }
+
+    .app-header {
+        min-height: 60px;
+        padding: 10px 16px;
+    }
+
+    .mobile-menu-button {
+        display: inline-flex;
+    }
+
+    .header-left h2 {
+        font-size: 18px;
+    }
+
+    .header-user span {
+        display: none;
+    }
+
+    .app-content {
+        padding: 16px;
+    }
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+.dashboard-page {
+    width: 100%;
+}
+
+.dashboard-header {
+    margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.2;
+    color: #111827;
+}
+
+.dashboard-header p {
+    margin: 8px 0 0;
+    color: #6b7280;
+    font-size: 15px;
+}
+
+/* STATS */
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.dashboard-stat-card {
+    min-width: 0;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.dashboard-stat-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.dashboard-stat-value {
+    display: block;
+    color: #111827;
+    font-size: 30px;
+    line-height: 1;
+}
+
+/* SECTION */
+
+.dashboard-section {
+    width: 100%;
+}
+
+.dashboard-section-header {
+    margin-bottom: 16px;
+}
+
+.dashboard-section-header h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 20px;
+}
+
+/* EMPTY STATE */
+
+.dashboard-empty-state {
+    padding: 32px 20px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.dashboard-empty-state p {
+    margin: 0;
+    color: #6b7280;
+}
+
+/* MATCH LIST */
+
+.dashboard-matches {
+    display: grid;
+    gap: 16px;
+}
+
+/* MATCH CARD */
+
+.dashboard-match-card {
+    min-width: 0;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+/* MATCH HEADER */
+
+.dashboard-match-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.dashboard-match-code {
+    display: block;
+    margin-bottom: 6px;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.dashboard-match-header h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 18px;
+    line-height: 1.3;
+}
+
+.dashboard-match-status {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* TEAMS */
+
+.dashboard-match-teams {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.dashboard-team {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dashboard-team:last-child {
+    text-align: right;
+}
+
+.dashboard-team strong {
+    color: #111827;
+    font-size: 17px;
+}
+
+.dashboard-team span {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.dashboard-vs {
+    color: #9ca3af;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* MATCH INFO */
+
+.dashboard-match-info {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.dashboard-match-info div {
+    min-width: 0;
+}
+
+.dashboard-match-info span,
+.dashboard-match-result span {
+    display: block;
+    margin-bottom: 5px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.dashboard-match-info strong,
+.dashboard-match-result strong {
+    color: #111827;
+    font-size: 14px;
+}
+
+/* RESULT */
+
+.dashboard-match-result {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+/* TABLET */
+
+@media (max-width: 767px) {
+    .dashboard-header h1 {
+        font-size: 24px;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .dashboard-stat-card {
+        padding: 16px;
+    }
+
+    .dashboard-stat-value {
+        font-size: 26px;
+    }
+
+    .dashboard-match-card {
+        padding: 16px;
+    }
+
+    .dashboard-match-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .dashboard-match-status {
+        align-self: flex-start;
+    }
+
+    .dashboard-match-teams {
+        gap: 10px;
+        margin: 20px 0;
+    }
+
+    .dashboard-team strong {
+        font-size: 15px;
+    }
+
+    .dashboard-match-info {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+/* VERY SMALL MOBILE */
+
+@media (max-width: 400px) {
+    .dashboard-match-teams {
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+
+    .dashboard-team strong {
+        font-size: 14px;
+        overflow-wrap: anywhere;
+    }
+
+    .dashboard-team span {
+        font-size: 12px;
+    }
+
+    .dashboard-match-card {
+        padding: 14px;
+    }
+}
+
+
+/* =========================
+   PLAYERS
+========================= */
+
+.players-page {
+    width: 100%;
+}
+
+.players-header {
+    margin-bottom: 24px;
+}
+
+.players-header h1 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.2;
+    color: #111827;
+}
+
+.players-header p {
+    margin: 8px 0 0;
+    color: #6b7280;
+    font-size: 15px;
+}
+
+.players-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.player-card {
+    min-width: 0;
+    padding: 18px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.player-card-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.player-card-main h2 {
+    min-width: 0;
+    margin: 0;
+    color: #111827;
+    font-size: 17px;
+    overflow-wrap: anywhere;
+}
+
+.player-card-main span {
+    flex-shrink: 0;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.player-card-role {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.players-empty-state {
+    padding: 32px 20px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.players-empty-state p {
+    margin: 0;
+    color: #6b7280;
+}
+
+/* TABLET */
+
+@media (max-width: 1023px) {
+    .players-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* MOBILE */
+
+@media (max-width: 767px) {
+    .players-header h1 {
+        font-size: 24px;
+    }
+
+    .players-list {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .player-card {
+        padding: 16px;
+    }
+}
+
+
+.matches-create-section {
+    margin-top: 24px;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.match-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.match-form input,
+.match-form select {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.match-form input:focus,
+.match-form select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.match-form button {
+    min-height: 44px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.match-form button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+    .matches-create-section {
+        padding: 16px;
+    }
+
+    .match-form {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+.matches-section {
+    margin-top: 24px;
+}
+
+.matches-list {
+    display: grid;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.match-card {
+    display: grid;
+    grid-template-columns: 1.2fr 1.5fr auto;
+    align-items: center;
+    gap: 24px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.match-card-main h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.match-card-main p {
+    margin: 6px 0 0;
+    color: #6b7280;
+}
+
+.match-card-teams {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.match-card-teams>div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.match-card-teams span {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.match-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #4b5563;
+    font-size: 14px;
+}
+
+
+@media (max-width: 768px) {
+    .matches-create-section {
+        padding: 16px;
+    }
+
+    .match-form {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .match-card {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .match-card-teams {
+        justify-content: flex-start;
+    }
+
+    .match-card-info {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+    }
+}
