@@ -8,6 +8,8 @@ import {
     Users,
     LoaderCircle,
     X,
+    RefreshCw,
+    ChevronDown,
 } from 'lucide-react'
 
 import { getPublicLiveMatch } from '../../services/api/publicMatch.api'
@@ -93,15 +95,15 @@ function PublicMatch() {
         data?.teams?.teamB
 
     return (
-        <main className="h-dvh w-full overflow-hidden bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
-            <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col overflow-hidden px-2 py-2 sm:px-3 sm:py-3">
+        <main className="min-h-dvh w-full bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
+            <div className="mx-auto w-full max-w-[1440px] px-3 py-3 sm:px-5 sm:py-5 lg:px-6">
                 <PublicHeader
                     match={match}
                     isLive={isLive}
                     isCompleted={isCompleted}
                 />
 
-                <div className="mt-2 min-h-0 flex-1 overflow-hidden">
+                <div className="mt-4">
                     {isTossPending && (
                         <TossPendingView
                             teamA={teamA}
@@ -188,11 +190,11 @@ function PublicMatch() {
 
 function PublicHeader({ match, isLive, isCompleted }) {
     return (
-        <header className="shrink-0 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-4">
-            <div className="flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
-                        <Trophy size={16} />
+        <header className="rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="grid gap-3 px-4 py-4 sm:px-5 sm:py-4 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+                <div className="flex min-w-0 items-center gap-2 lg:justify-self-start">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-sm">
+                        <Trophy size={20} />
                     </div>
 
                     <div className="min-w-0">
@@ -200,29 +202,37 @@ function PublicHeader({ match, isLive, isCompleted }) {
                             CrickBoard
                         </p>
 
-                        <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-slate-400">
-                            <Eye size={10} />
+                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            <Eye size={12} />
                             Public Match
                         </div>
                     </div>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-1.5">
+                {match?.title && (
+                    <div className="min-w-0 text-center lg:justify-self-center">
+                        <p className="truncate text-sm font-black text-slate-900 dark:text-white sm:text-base lg:max-w-[520px] lg:text-lg">
+                            {match.title}
+                        </p>
+                    </div>
+                )}
+
+                <div className="flex items-center gap-3 lg:justify-self-end">
                     {match?.matchCode && (
-                        <span className="hidden rounded-lg bg-slate-100 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-300 sm:inline-flex">
+                        <span className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                             {match.matchCode}
                         </span>
                     )}
 
                     {isLive && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-[8px] font-black uppercase tracking-wider text-red-600 dark:bg-red-950/40 dark:text-red-400">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-red-600 dark:bg-red-950/40 dark:text-red-400">
                             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
                             LIVE
                         </span>
                     )}
 
                     {isCompleted && (
-                        <span className="inline-flex rounded-full bg-brand-50 px-2.5 py-1 text-[8px] font-black uppercase tracking-wider text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
+                        <span className="inline-flex rounded-full bg-brand-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
                             COMPLETED
                         </span>
                     )}
@@ -240,7 +250,7 @@ function LoadingScreen() {
     return (
         <main className="flex h-dvh w-full items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-950">
             <div className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-100 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400">
                     <LoaderCircle size={22} className="animate-spin" />
                 </div>
 
@@ -256,7 +266,7 @@ function ErrorScreen({ message, onRetry }) {
     return (
         <main className="flex h-dvh w-full items-center justify-center overflow-hidden bg-slate-50 px-4 dark:bg-slate-950">
             <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400">
                     <AlertTriangle size={22} />
                 </div>
 
@@ -288,11 +298,6 @@ function ErrorScreen({ message, onRetry }) {
 function TossPendingView({ teamA, teamB }) {
     return (
         <div className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-2">
-            <MatchTeamsStrip
-                teamA={teamA}
-                teamB={teamB}
-            />
-
             <StatusPanel
                 icon={<Clock3 size={22} />}
                 title="Toss Pending"
@@ -309,11 +314,7 @@ function TossPendingView({ teamA, teamB }) {
 
 function ReadyView({ teamA, teamB }) {
     return (
-        <div className="grid h-full min-h-0 grid-rows-[auto_auto_1fr] gap-2">
-            <MatchTeamsStrip
-                teamA={teamA}
-                teamB={teamB}
-            />
+        <div className="space-y-4">
 
             <div className="rounded-2xl border border-brand-200 bg-brand-50 px-3 py-2 dark:border-brand-900/50 dark:bg-brand-950/20">
                 <div className="flex items-center gap-2">
@@ -326,7 +327,7 @@ function ReadyView({ teamA, teamB }) {
                             Match Ready to Start
                         </p>
 
-                        <p className="text-[9px] font-semibold text-slate-500 dark:text-slate-400">
+                        <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                             Waiting for match to start
                         </p>
                     </div>
@@ -356,32 +357,29 @@ function DesktopLiveView({
     teamB,
 }) {
     return (
-        <div className="grid h-full min-h-0 grid-cols-12 gap-2">
-            <div className="col-span-5 min-h-0">
-                <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2">
-                    <MatchTeamsStrip
-                        teamA={teamA}
-                        teamB={teamB}
-                    />
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.9fr)_minmax(300px,0.85fr)]">
+            <div className="space-y-4">
+                <div className="space-y-4">
 
                     <LiveScoreCard
                         match={match}
                         innings={innings}
                     />
 
-                    <CurrentPlayers innings={innings} />
                 </div>
             </div>
 
-            <div className="col-span-4 min-h-0">
+            <div className="min-w-0">
                 <RecentBalls
                     recentBalls={recentBalls}
                 />
             </div>
 
-            <div className="col-span-3 min-h-0">
+            <div className="min-w-0">
                 <CompactScorecard
                     scorecard={scorecard}
+                    teamA={teamA}
+                    teamB={teamB}
                 />
             </div>
         </div>
@@ -402,11 +400,7 @@ function MobileLiveView({
     onShowTeams,
 }) {
     return (
-        <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto_auto] gap-1.5">
-            <MatchTeamsStrip
-                teamA={teamA}
-                teamB={teamB}
-            />
+        <div className="space-y-3">
 
             <LiveScoreCard
                 match={match}
@@ -414,25 +408,23 @@ function MobileLiveView({
                 mobile
             />
 
-            <CurrentPlayers
-                innings={innings}
-                mobile
-            />
 
-            <div className="grid min-h-0 grid-cols-2 gap-1.5">
+            <div className="space-y-3">
                 <MobileRecentBalls
                     recentBalls={recentBalls}
                 />
 
                 <MobileScorecard
                     scorecard={scorecard}
+                    teamA={teamA}
+                    teamB={teamB}
                 />
             </div>
 
             <button
                 type="button"
                 onClick={onShowTeams}
-                className="absolute bottom-2 right-2 hidden"
+                className="hidden"
             >
                 Teams
             </button>
@@ -452,13 +444,9 @@ function DesktopCompletedView({
     teamB,
 }) {
     return (
-        <div className="grid h-full min-h-0 grid-cols-12 gap-2">
-            <div className="col-span-5 min-h-0">
-                <div className="grid h-full min-h-0 grid-rows-[auto_auto_1fr] gap-2">
-                    <MatchTeamsStrip
-                        teamA={teamA}
-                        teamB={teamB}
-                    />
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.9fr)_minmax(300px,0.85fr)]">
+            <div className="space-y-4">
+                <div className="space-y-4">
 
                     <CompletedSummary
                         match={match}
@@ -472,15 +460,17 @@ function DesktopCompletedView({
                 </div>
             </div>
 
-            <div className="col-span-4 min-h-0">
+            <div className="min-w-0">
                 <RecentBalls
                     recentBalls={recentBalls}
                 />
             </div>
 
-            <div className="col-span-3 min-h-0">
+            <div className="min-w-0">
                 <CompactScorecard
                     scorecard={scorecard}
+                    teamA={teamA}
+                    teamB={teamB}
                 />
             </div>
         </div>
@@ -500,11 +490,7 @@ function MobileCompletedView({
     onShowTeams,
 }) {
     return (
-        <div className="grid h-full min-h-0 grid-rows-[auto_auto_1fr_auto] gap-1.5">
-            <MatchTeamsStrip
-                teamA={teamA}
-                teamB={teamB}
-            />
+        <div className="space-y-3">
 
             <CompletedSummary
                 match={match}
@@ -512,13 +498,15 @@ function MobileCompletedView({
                 mobile
             />
 
-            <div className="grid min-h-0 grid-cols-2 gap-1.5">
+            <div className="space-y-3">
                 <MobileRecentBalls
                     recentBalls={recentBalls}
                 />
 
                 <MobileScorecard
                     scorecard={scorecard}
+                    teamA={teamA}
+                    teamB={teamB}
                 />
             </div>
 
@@ -541,25 +529,6 @@ function MobileCompletedView({
 /* Teams                                                                      */
 /* -------------------------------------------------------------------------- */
 
-function MatchTeamsStrip({ teamA, teamB }) {
-    return (
-        <section className="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <CompactTeam
-                team={teamA}
-                align="left"
-            />
-
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-[8px] font-black text-slate-400 dark:bg-slate-800">
-                VS
-            </div>
-
-            <CompactTeam
-                team={teamB}
-                align="right"
-            />
-        </section>
-    )
-}
 
 function CompactTeam({ team, align }) {
     if (!team) {
@@ -580,12 +549,12 @@ function CompactTeam({ team, align }) {
                     : 'min-w-0 text-left'
             }
         >
-            <p className="truncate text-xs font-black text-slate-950 dark:text-white sm:text-sm">
+            <p className="truncate text-base font-black text-slate-950 dark:text-white sm:text-lg">
                 {team.name || 'Unknown Team'}
             </p>
 
             {team.shortName && (
-                <p className="mt-0.5 text-[8px] font-black uppercase tracking-wider text-slate-400">
+                <p className="mt-0.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
                     {team.shortName}
                 </p>
             )}
@@ -596,6 +565,26 @@ function CompactTeam({ team, align }) {
 /* -------------------------------------------------------------------------- */
 /* Live Score                                                                 */
 /* -------------------------------------------------------------------------- */
+
+function CurrentPlayer({ label, player, mobile = false }) {
+    if (!player) {
+        return (
+            <div className="rounded-2xl bg-slate-50 px-2.5 py-2.5 text-center dark:bg-slate-800/70">
+                <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">{label}</p>
+                <p className="mt-1 truncate text-[10px] font-bold text-slate-400">—</p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="rounded-2xl bg-slate-50 px-2.5 py-2.5 text-center dark:bg-slate-800/70">
+            <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">{label}</p>
+            <p className={mobile ? "mt-1 truncate text-[10px] font-black text-slate-800 dark:text-slate-200" : "mt-1 truncate text-[11px] font-black text-slate-800 dark:text-slate-200"}>
+                {player.name || player.shortName || "Unknown"}
+            </p>
+        </div>
+    )
+}
 
 function LiveScoreCard({ match, innings, mobile = false }) {
     if (!innings) {
@@ -609,21 +598,23 @@ function LiveScoreCard({ match, innings, mobile = false }) {
     }
 
     return (
-        <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-sm dark:border-brand-900/50 dark:bg-slate-900">
-            <div className="flex shrink-0 items-center justify-between bg-brand-600 px-3 py-2 text-white sm:px-4">
+        <section className="overflow-hidden rounded-3xl border border-brand-200 bg-white shadow-sm dark:border-brand-900/50 dark:bg-slate-900">
+            <div className="flex shrink-0 items-center justify-between bg-brand-600 px-4 py-3.5 text-white sm:px-5">
                 <div className="min-w-0">
-                    <p className="text-[8px] font-black uppercase tracking-[0.18em] text-brand-100">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-100">
                         Innings {innings.inningsNumber}
                     </p>
 
-                    <p className="mt-0.5 truncate text-[11px] font-black">
-                        {innings.battingTeam?.name || 'Batting'}
+                    <p className="mt-1 truncate text-sm font-black sm:text-base">
+                        {getTeamDisplayName(innings.battingTeam)}
+                        <span className="px-1.5 text-brand-100">vs</span>
+                        {getTeamDisplayName(innings.bowlingTeam)}
                     </p>
                 </div>
 
                 {innings.target != null && (
                     <div className="text-right">
-                        <p className="text-[7px] font-black uppercase tracking-wider text-brand-100">
+                        <p className="text-[11px] font-black uppercase tracking-wider text-brand-100">
                             Target
                         </p>
 
@@ -634,45 +625,45 @@ function LiveScoreCard({ match, innings, mobile = false }) {
                 )}
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col justify-center px-3 py-2 sm:p-5">
+            <div className="p-5 sm:p-6">
                 <div className="text-center">
                     <p
                         className={
                             mobile
-                                ? 'text-5xl font-black tracking-tight text-slate-950 dark:text-white'
-                                : 'text-5xl font-black tracking-tight text-slate-950 dark:text-white sm:text-6xl'
+                                ? 'text-7xl font-black tracking-tight text-slate-950 dark:text-white'
+                                : 'text-7xl font-black tracking-tight text-slate-950 dark:text-white sm:text-7xl'
                         }
                     >
                         {innings.totalRuns}/{innings.totalWickets}
                     </p>
 
-                    <p className="mt-0.5 text-[10px] font-bold text-slate-400">
+                    <p className="mt-1 text-sm font-bold text-slate-400">
                         {innings.overs} overs
                     </p>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-1.5 sm:mt-5 sm:gap-2">
+                {(innings.striker || innings.nonStriker || innings.currentBowler) && (
+                    <div className="mt-5 grid grid-cols-3 gap-2">
+                        <CurrentPlayer label="Striker" player={innings.striker} mobile={mobile} />
+                        <CurrentPlayer label="Non-Striker" player={innings.nonStriker} mobile={mobile} />
+                        <CurrentPlayer label="Bowler" player={innings.currentBowler} mobile={mobile} />
+                    </div>
+                )}
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
                     <InfoBox
                         label="Batting"
-                        value={
-                            innings.battingTeam?.shortName ||
-                            innings.battingTeam?.name ||
-                            '—'
-                        }
+                        value={getTeamDisplayName(innings.battingTeam)}
                     />
 
                     <InfoBox
                         label="Bowling"
-                        value={
-                            innings.bowlingTeam?.shortName ||
-                            innings.bowlingTeam?.name ||
-                            '—'
-                        }
+                        value={getTeamDisplayName(innings.bowlingTeam)}
                     />
                 </div>
 
                 {match?.totalOvers && (
-                    <p className="mt-2 text-center text-[8px] font-bold text-slate-400">
+                    <p className="mt-2 text-center text-[10px] font-bold text-slate-400">
                         {match.totalOvers} overs match
                     </p>
                 )}
@@ -685,92 +676,56 @@ function LiveScoreCard({ match, innings, mobile = false }) {
 /* Current Players                                                            */
 /* -------------------------------------------------------------------------- */
 
-function CurrentPlayers({ innings, mobile = false }) {
-    if (!innings) return null
-
-    const hasPlayers =
-        innings.striker ||
-        innings.nonStriker ||
-        innings.currentBowler
-
-    if (!hasPlayers) return null
-
-    return (
-        <section className="shrink-0 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-3">
-            <div className="grid grid-cols-3 gap-1.5">
-                <CurrentPlayer
-                    label="Striker"
-                    player={innings.striker}
-                    mobile={mobile}
-                />
-
-                <CurrentPlayer
-                    label="Non-Striker"
-                    player={innings.nonStriker}
-                    mobile={mobile}
-                />
-
-                <CurrentPlayer
-                    label="Bowler"
-                    player={innings.currentBowler}
-                    mobile={mobile}
-                />
-            </div>
-        </section>
-    )
-}
-
-function CurrentPlayer({ label, player, mobile }) {
-    return (
-        <div className="min-w-0 rounded-xl bg-slate-50 px-1.5 py-1.5 text-center dark:bg-slate-800/70 sm:px-2 sm:py-2">
-            <p className="truncate text-[7px] font-black uppercase tracking-wider text-slate-400">
-                {label}
-            </p>
-
-            <p className="mt-1 truncate text-[9px] font-black text-slate-800 dark:text-slate-200 sm:text-[10px]">
-                {player?.name || player?.shortName || '—'}
-            </p>
-
-            {!mobile && player?.role && (
-                <p className="mt-0.5 truncate text-[7px] font-bold text-slate-400">
-                    {player.role}
-                </p>
-            )}
-        </div>
-    )
-}
-
 /* -------------------------------------------------------------------------- */
 /* Recent Balls                                                               */
 /* -------------------------------------------------------------------------- */
 
 function RecentBalls({ recentBalls }) {
+    const [isOpen, setIsOpen] = useState(false)
     const visibleBalls = useMemo(
-        () => (Array.isArray(recentBalls) ? recentBalls.slice(0, 12) : []),
+        () =>
+            (Array.isArray(recentBalls) ? [...recentBalls] : [])
+                .sort((a, b) => {
+                    const overA = Number(a.overNumber ?? 0)
+                    const ballA = Number(a.ballNumber ?? 0)
+                    const overB = Number(b.overNumber ?? 0)
+                    const ballB = Number(b.ballNumber ?? 0)
+
+                    return overB - overA || ballB - ballA
+                })
+                .slice(0, 12),
         [recentBalls],
     )
 
     return (
-        <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-4">
-            <SectionTitle
-                icon={<Eye size={15} />}
-                title="Recent Balls"
-            />
+        <section className="rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <button
+                type="button"
+                onClick={() => setIsOpen((value) => !value)}
+                className="flex w-full items-center justify-between gap-3 p-4 text-left sm:p-5"
+            >
+                <SectionTitle icon={<Eye size={15} />} title="Recent Balls" />
+                <ChevronDown
+                    size={18}
+                    className={`shrink-0 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                />
+            </button>
 
-            {visibleBalls.length === 0 ? (
-                <div className="flex flex-1 items-center justify-center">
-                    <p className="text-xs font-bold text-slate-400">
-                        No balls recorded yet
-                    </p>
-                </div>
-            ) : (
-                <div className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-hidden">
-                    {visibleBalls.map((ball) => (
-                        <BallEvent
-                            key={ball._id}
-                            ball={ball}
-                        />
-                    ))}
+            {isOpen && (
+                <div className="border-t border-slate-100 px-4 pb-4 pt-4 dark:border-slate-800 sm:px-5 sm:pb-5">
+                    {visibleBalls.length === 0 ? (
+                        <div className="flex items-center justify-center py-6">
+                            <p className="text-xs font-bold text-slate-400">
+                                No balls recorded yet
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {visibleBalls.map((ball) => (
+                                <BallEvent key={ball._id} ball={ball} />
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </section>
@@ -778,61 +733,69 @@ function RecentBalls({ recentBalls }) {
 }
 
 function MobileRecentBalls({ recentBalls }) {
+    const [isOpen, setIsOpen] = useState(false)
     const visibleBalls = Array.isArray(recentBalls)
         ? recentBalls.slice(0, 3)
         : []
 
     return (
-        <section className="min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <SectionTitle
-                icon={<Eye size={13} />}
-                title="Recent"
-            />
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <button
+                type="button"
+                onClick={() => setIsOpen((value) => !value)}
+                className="flex w-full items-center justify-between gap-2 p-2.5 text-left"
+            >
+                <SectionTitle icon={<Eye size={13} />} title="Recent Balls" />
+                <ChevronDown
+                    size={16}
+                    className={`shrink-0 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                />
+            </button>
 
-            <div className="mt-2 space-y-1">
-                {visibleBalls.length === 0 ? (
-                    <p className="py-3 text-center text-[8px] font-bold text-slate-400">
-                        No balls
-                    </p>
-                ) : (
-                    visibleBalls.map((ball) => (
-                        <div
-                            key={ball._id}
-                            className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-1.5 py-1.5 dark:bg-slate-800/70"
-                        >
-                            <span className="w-6 shrink-0 text-center text-[7px] font-black text-slate-400">
-                                {ball.overNumber}.{ball.ballNumber}
-                            </span>
-
-                            <span className="min-w-0 flex-1 truncate text-[8px] font-bold text-slate-700 dark:text-slate-300">
-                                {ball.striker?.shortName ||
-                                    ball.striker?.name ||
-                                    '—'}
-                            </span>
-
-                            <span
-                                className={[
-                                    'flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md px-1',
-                                    'text-[8px] font-black',
-                                    getBallResultClass(ball),
-                                ].join(' ')}
-                            >
-                                {getBallResult(ball)}
-                            </span>
-                        </div>
-                    ))
-                )}
-            </div>
+            {isOpen && (
+                <div className="border-t border-slate-100 px-2.5 pb-2.5 pt-2 dark:border-slate-800">
+                    <div className="space-y-1">
+                        {visibleBalls.length === 0 ? (
+                            <p className="py-3 text-center text-[10px] font-bold text-slate-400">
+                                No balls
+                            </p>
+                        ) : (
+                            visibleBalls.map((ball) => (
+                                <div
+                                    key={ball._id}
+                                    className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-1.5 py-1.5 dark:bg-slate-800/70"
+                                >
+                                    <span className="w-6 shrink-0 text-center text-[11px] font-black text-slate-400">
+                                        {ball.overNumber}.{ball.ballNumber}
+                                    </span>
+                                    <span className="min-w-0 flex-1 truncate text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                                        {ball.striker?.shortName || ball.striker?.name || '—'}
+                                    </span>
+                                    <span
+                                        className={[
+                                            'flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md px-1',
+                                            'text-[10px] font-black',
+                                            getBallResultClass(ball),
+                                        ].join(' ')}
+                                    >
+                                        {getBallResult(ball)}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
         </section>
     )
 }
 
 function BallEvent({ ball }) {
     return (
-        <div className="rounded-xl border border-slate-100 bg-slate-50 px-2.5 py-2 dark:border-slate-800 dark:bg-slate-800/60">
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/60">
             <div className="flex items-center gap-2">
-                <div className="w-9 shrink-0 text-center">
-                    <p className="text-[7px] font-black uppercase text-slate-400">
+                <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-white dark:bg-slate-900">
+                    <p className="text-[11px] font-black uppercase text-slate-400">
                         Ball
                     </p>
 
@@ -846,7 +809,7 @@ function BallEvent({ ball }) {
                         {ball.striker?.name || 'Unknown striker'}
                     </p>
 
-                    <p className="truncate text-[8px] font-semibold text-slate-400">
+                    <p className="truncate text-[10px] font-semibold text-slate-400">
                         {ball.bowler?.name || 'Unknown bowler'}
                     </p>
                 </div>
@@ -854,7 +817,7 @@ function BallEvent({ ball }) {
                 <div
                     className={[
                         'flex h-7 min-w-7 shrink-0 items-center justify-center rounded-lg px-1.5',
-                        'text-[9px] font-black',
+                        'text-[11px] font-black',
                         getBallResultClass(ball),
                     ].join(' ')}
                 >
@@ -883,7 +846,7 @@ function BallEvent({ ball }) {
             </div>
 
             {ball.commentary && (
-                <p className="mt-1.5 truncate text-[8px] font-semibold text-slate-400">
+                <p className="mt-1.5 truncate text-[10px] font-semibold text-slate-400">
                     {ball.commentary}
                 </p>
             )}
@@ -964,7 +927,7 @@ function MiniTag({ children, variant = 'default' }) {
     return (
         <span
             className={[
-                'rounded-md px-1.5 py-0.5 text-[7px] font-black',
+                'rounded-md px-1.5 py-0.5 text-[11px] font-black',
                 classes[variant],
             ].join(' ')}
         >
@@ -977,76 +940,172 @@ function MiniTag({ children, variant = 'default' }) {
 /* Scorecard                                                                  */
 /* -------------------------------------------------------------------------- */
 
-function CompactScorecard({ scorecard }) {
-    return (
-        <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-4">
-            <SectionTitle
-                icon={<Trophy size={15} />}
-                title="Scorecard"
-            />
+function CompactScorecard({ scorecard, teamA, teamB }) {
+    const [isOpen, setIsOpen] = useState(false)
 
-            {scorecard.length === 0 ? (
-                <div className="flex flex-1 items-center justify-center">
-                    <p className="text-xs font-bold text-slate-400">
-                        Scorecard unavailable
-                    </p>
-                </div>
-            ) : (
-                <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-hidden">
-                    {scorecard.map((inning) => (
-                        <CompactInning
-                            key={inning.id}
-                            inning={inning}
-                        />
-                    ))}
+    return (
+        <section className="rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <button
+                type="button"
+                onClick={() => setIsOpen((value) => !value)}
+                className="flex w-full items-center justify-between gap-3 p-4 text-left sm:p-5"
+            >
+                <SectionTitle icon={<Trophy size={15} />} title="Scorecard" />
+                <ChevronDown
+                    size={18}
+                    className={`shrink-0 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                />
+            </button>
+
+            {isOpen && (
+                <div className="border-t border-slate-100 px-4 pb-4 pt-4 dark:border-slate-800 sm:px-5 sm:pb-5">
+                    {scorecard.length === 0 ? (
+                        <div className="flex items-center justify-center py-6">
+                            <p className="text-xs font-bold text-slate-400">
+                                Scorecard unavailable
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {scorecard.map((inning) => (
+                                <CompactInning
+                                    key={inning.id}
+                                    inning={inning}
+                                    teamA={teamA}
+                                    teamB={teamB}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </section>
     )
 }
 
-function MobileScorecard({ scorecard }) {
-    return (
-        <section className="min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <SectionTitle
-                icon={<Trophy size={13} />}
-                title="Scorecard"
-            />
+function MobileScorecard({ scorecard, teamA, teamB }) {
+    const [isOpen, setIsOpen] = useState(false)
 
-            <div className="mt-2 space-y-1.5">
-                {scorecard.length === 0 ? (
-                    <p className="py-3 text-center text-[8px] font-bold text-slate-400">
-                        No scorecard
-                    </p>
-                ) : (
-                    scorecard.map((inning) => (
-                        <CompactInning
-                            key={inning.id}
-                            inning={inning}
-                            mobile
-                        />
-                    ))
-                )}
-            </div>
+    return (
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <button
+                type="button"
+                onClick={() => setIsOpen((value) => !value)}
+                className="flex w-full items-center justify-between gap-2 p-2.5 text-left"
+            >
+                <SectionTitle icon={<Trophy size={13} />} title="Scorecard" />
+                <ChevronDown
+                    size={16}
+                    className={`shrink-0 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                />
+            </button>
+
+            {isOpen && (
+                <div className="border-t border-slate-100 px-2.5 pb-2.5 pt-2 dark:border-slate-800">
+                    <div className="space-y-1.5">
+                        {scorecard.length === 0 ? (
+                            <p className="py-3 text-center text-[10px] font-bold text-slate-400">
+                                No scorecard
+                            </p>
+                        ) : (
+                            scorecard.map((inning) => (
+                                <CompactInning
+                                    key={inning.id}
+                                    inning={inning}
+                                    mobile
+                                    teamA={teamA}
+                                    teamB={teamB}
+                                />
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
         </section>
     )
 }
 
-function CompactInning({ inning, mobile = false }) {
+function getTeamValue(team, keys = []) {
+    if (!team) return ''
+
+    if (typeof team === 'string') {
+        return team
+    }
+
+    for (const key of keys) {
+        const value = team?.[key]
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+            return String(value)
+        }
+    }
+
+    return ''
+}
+
+function getTeamId(team) {
+    return getTeamValue(team, ['_id', 'id', 'teamId', 'value'])
+}
+
+function getTeamLabel(team) {
+    return getTeamValue(team, ['name', 'shortName', 'teamName'])
+}
+
+function getTeamDisplayName(team) {
+    return (
+        team?.name ||
+        team?.shortName ||
+        team?.teamName ||
+        '—'
+    )
+}
+
+function isSameTeam(first, second) {
+    const firstId = getTeamId(first)
+    const secondId = getTeamId(second)
+
+    if (firstId && secondId) {
+        return String(firstId) === String(secondId)
+    }
+
+    const firstLabel = getTeamLabel(first).trim().toLowerCase()
+    const secondLabel = getTeamLabel(second).trim().toLowerCase()
+
+    return Boolean(firstLabel && secondLabel && firstLabel === secondLabel)
+}
+
+function CompactInning({ inning, mobile = false, teamA, teamB }) {
     const score = inning.score
+    const battingTeam = inning.battingTeam
+    const bowlingTeam = inning.bowlingTeam
+
+    const resolvedBowlingTeam =
+        bowlingTeam ||
+        (isSameTeam(battingTeam, teamA)
+            ? teamB
+            : isSameTeam(battingTeam, teamB)
+                ? teamA
+                : null)
+
+    const battingLabel =
+        getTeamLabel(battingTeam) ||
+        'Batting'
+
+    const bowlingLabel =
+        getTeamLabel(resolvedBowlingTeam) ||
+        'Bowling'
 
     return (
         <div className="rounded-xl border border-slate-100 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-800/60">
-            <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                    <p className="text-[7px] font-black uppercase tracking-wider text-slate-400">
+            <div className="flex flex-col gap-3 px-4 py-4 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="grid min-w-0 flex-1 grid-cols-[auto_1fr] items-center gap-4">
+                    <p className="shrink-0 text-[11px] font-black uppercase tracking-wider text-slate-400">
                         Innings {inning.inningsNumber}
                     </p>
 
-                    <p className="mt-0.5 truncate text-[9px] font-black text-slate-800 dark:text-slate-200">
-                        {inning.battingTeam?.shortName ||
-                            inning.battingTeam?.name ||
-                            'Batting'}
+                    <p className="truncate text-right text-[11px] font-black text-slate-800 dark:text-slate-200">
+                        {battingLabel}
+                        {' vs '}
+                        {bowlingLabel}
                     </p>
                 </div>
 
@@ -1062,7 +1121,7 @@ function CompactInning({ inning, mobile = false }) {
                             {score.runs}/{score.wickets}
                         </p>
 
-                        <p className="text-[7px] font-bold text-slate-400">
+                        <p className="text-[11px] font-bold text-slate-400">
                             {score.overs}
                         </p>
                     </div>
@@ -1097,11 +1156,11 @@ function CompactInning({ inning, mobile = false }) {
 function ScoreStat({ label, value }) {
     return (
         <div className="rounded-lg bg-white px-1.5 py-1 text-center dark:bg-slate-900">
-            <p className="text-[6px] font-black uppercase tracking-wider text-slate-400">
+            <p className="text-[8px] font-black uppercase tracking-wider text-slate-400">
                 {label}
             </p>
 
-            <p className="mt-0.5 text-[8px] font-black text-slate-700 dark:text-slate-300">
+            <p className="mt-0.5 text-[10px] font-black text-slate-700 dark:text-slate-300">
                 {value}
             </p>
         </div>
@@ -1121,17 +1180,17 @@ function CompletedSummary({ match, scorecard, mobile = false }) {
                     : 'shrink-0 overflow-hidden rounded-2xl border border-brand-200 bg-brand-50 p-3 dark:border-brand-900/50 dark:bg-brand-950/20'
             }
         >
-            <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700 dark:bg-brand-900/60 dark:text-brand-400">
-                    <Trophy size={17} />
+            <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-700 dark:bg-brand-900/60 dark:text-brand-400">
+                    <Trophy size={20} />
                 </div>
 
                 <div className="min-w-0">
-                    <p className="text-[8px] font-black uppercase tracking-[0.16em] text-brand-700 dark:text-brand-400">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand-700 dark:text-brand-400">
                         Match Completed
                     </p>
 
-                    <p className="mt-0.5 truncate text-sm font-black text-slate-950 dark:text-white">
+                    <p className="mt-1 text-lg font-black text-slate-950 dark:text-white">
                         {match?.winner?.name ||
                             match?.winner?.shortName ||
                             'Match Completed'}
@@ -1141,27 +1200,26 @@ function CompletedSummary({ match, scorecard, mobile = false }) {
 
             {match?.result && (
                 <div className="mt-2 rounded-xl bg-white px-3 py-2 dark:bg-slate-900">
-                    <p className="truncate text-[9px] font-black text-brand-700 dark:text-brand-400">
+                    <p className="truncate text-[11px] font-black text-brand-700 dark:text-brand-400">
                         {match.result}
                     </p>
                 </div>
             )}
 
             {scorecard.length > 0 && (
-                <div className="mt-2 grid grid-cols-2 gap-1.5">
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     {scorecard.map((inning) => (
                         <div
                             key={inning.id}
                             className="rounded-xl bg-white px-2 py-1.5 text-center dark:bg-slate-900"
                         >
-                            <p className="truncate text-[7px] font-black uppercase text-slate-400">
-                                {inning.battingTeam?.shortName ||
-                                    inning.battingTeam?.name ||
+                            <p className="truncate text-[11px] font-black uppercase text-slate-400">
+                                {getTeamLabel(inning.battingTeam) ||
                                     `Innings ${inning.inningsNumber}`}
                             </p>
 
                             {inning.score && (
-                                <p className="mt-0.5 text-xs font-black text-slate-900 dark:text-white">
+                                <p className="mt-1 text-lg font-black text-slate-900 dark:text-white">
                                     {inning.score.runs}/{inning.score.wickets}
                                 </p>
                             )}
@@ -1179,7 +1237,7 @@ function CompletedSummary({ match, scorecard, mobile = false }) {
 
 function PlayingXIGrid({ teamA, teamB }) {
     return (
-        <section className="grid h-full min-h-0 grid-cols-2 gap-2 overflow-hidden">
+        <section className="grid gap-4 sm:grid-cols-2">
             <TeamSquad team={teamA} />
             <TeamSquad team={teamB} />
         </section>
@@ -1193,51 +1251,51 @@ function TeamSquad({ team }) {
     const notPlaying = team.notPlaying || []
 
     return (
-        <div className="min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between gap-2">
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+            <div className="flex flex-col gap-3 px-4 py-4 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0">
                     <p className="truncate text-xs font-black text-slate-950 dark:text-white">
                         {team.name || 'Team'}
                     </p>
 
                     {team.shortName && (
-                        <p className="text-[8px] font-black uppercase text-slate-400">
+                        <p className="text-[10px] font-black uppercase text-slate-400">
                             {team.shortName}
                         </p>
                     )}
                 </div>
 
-                <span className="shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-[8px] font-black text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
+                <span className="shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-[10px] font-black text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
                     {playingXI.length} Playing
                 </span>
             </div>
 
-            <div className="mt-2 min-h-0 overflow-hidden">
-                <div className="grid gap-1">
+            <div className="mt-4">
+                <div className="grid gap-2">
                     {playingXI.map((player) => (
                         <div
                             key={player.id}
                             className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2 py-1.5 dark:bg-slate-800/70"
                         >
                             <div className="min-w-0">
-                                <p className="truncate text-[9px] font-bold text-slate-700 dark:text-slate-300">
+                                <p className="truncate text-[11px] font-bold text-slate-700 dark:text-slate-300">
                                     {player.name}
                                 </p>
 
-                                <p className="truncate text-[7px] font-bold uppercase text-slate-400">
+                                <p className="truncate text-[11px] font-bold uppercase text-slate-400">
                                     {player.role}
                                 </p>
                             </div>
 
                             <div className="flex shrink-0 gap-1">
                                 {player.isCaptain && (
-                                    <span className="rounded bg-amber-100 px-1 py-0.5 text-[7px] font-black text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                                    <span className="rounded bg-amber-100 px-1 py-0.5 text-[11px] font-black text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
                                         C
                                     </span>
                                 )}
 
                                 {player.isWicketKeeper && (
-                                    <span className="rounded bg-blue-100 px-1 py-0.5 text-[7px] font-black text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">
+                                    <span className="rounded bg-blue-100 px-1 py-0.5 text-[11px] font-black text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">
                                         WK
                                     </span>
                                 )}
@@ -1248,15 +1306,15 @@ function TeamSquad({ team }) {
 
                 {notPlaying.length > 0 && (
                     <div className="mt-2">
-                        <p className="text-[7px] font-black uppercase text-slate-400">
+                        <p className="text-[11px] font-black uppercase text-slate-400">
                             Not Playing
                         </p>
 
-                        <div className="mt-1 grid grid-cols-2 gap-1">
+                        <div className="mt-2 grid grid-cols-2 gap-2">
                             {notPlaying.map((player) => (
                                 <div
                                     key={player.id}
-                                    className="truncate rounded-lg bg-slate-50 px-2 py-1.5 text-[8px] font-bold text-slate-400 dark:bg-slate-800/70"
+                                    className="truncate rounded-lg bg-slate-50 px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:bg-slate-800/70"
                                 >
                                     {player.name}
                                 </div>
@@ -1276,14 +1334,14 @@ function TeamSquad({ team }) {
 function TeamsModal({ teamA, teamB, onClose }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-3 backdrop-blur-sm">
-            <div className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+            <div className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-4 dark:border-slate-800">
                     <div>
-                        <p className="text-xs font-black text-slate-950 dark:text-white">
+                        <p className="text-base font-black text-slate-950 dark:text-white">
                             Playing XI
                         </p>
 
-                        <p className="text-[9px] font-bold text-slate-400">
+                        <p className="text-[11px] font-bold text-slate-400">
                             Team squads
                         </p>
                     </div>
@@ -1297,8 +1355,8 @@ function TeamsModal({ teamA, teamB, onClose }) {
                     </button>
                 </div>
 
-                <div className="min-h-0 overflow-y-auto p-3">
-                    <div className="grid gap-3">
+                <div className="min-h-0 overflow-y-auto p-4">
+                    <div className="space-y-4">
                         <MobileTeamList team={teamA} />
                         <MobileTeamList team={teamB} />
                     </div>
@@ -1315,50 +1373,50 @@ function MobileTeamList({ team }) {
     const notPlaying = team.notPlaying || []
 
     return (
-        <div className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
-            <div className="flex items-center justify-between gap-2">
+        <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+            <div className="flex flex-col gap-3 px-4 py-4 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0">
                     <p className="truncate text-sm font-black text-slate-950 dark:text-white">
                         {team.name}
                     </p>
 
                     {team.shortName && (
-                        <p className="text-[8px] font-black uppercase text-slate-400">
+                        <p className="text-[10px] font-black uppercase text-slate-400">
                             {team.shortName}
                         </p>
                     )}
                 </div>
 
-                <span className="shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-[8px] font-black text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
+                <span className="shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-[10px] font-black text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
                     {playingXI.length} Playing
                 </span>
             </div>
 
-            <div className="mt-2 grid gap-1">
+            <div className="mt-4 grid gap-2">
                 {playingXI.map((player) => (
                     <div
                         key={player.id}
                         className="flex items-center justify-between rounded-lg bg-slate-50 px-2.5 py-2 dark:bg-slate-800/70"
                     >
                         <div className="min-w-0">
-                            <p className="truncate text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                            <p className="truncate text-xs font-bold text-slate-700 dark:text-slate-300">
                                 {player.name}
                             </p>
 
-                            <p className="text-[7px] font-bold uppercase text-slate-400">
+                            <p className="text-[11px] font-bold uppercase text-slate-400">
                                 {player.role}
                             </p>
                         </div>
 
                         <div className="flex shrink-0 gap-1">
                             {player.isCaptain && (
-                                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[7px] font-black text-amber-700">
+                                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-black text-amber-700">
                                     C
                                 </span>
                             )}
 
                             {player.isWicketKeeper && (
-                                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[7px] font-black text-blue-700">
+                                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[11px] font-black text-blue-700">
                                     WK
                                 </span>
                             )}
@@ -1369,15 +1427,15 @@ function MobileTeamList({ team }) {
 
             {notPlaying.length > 0 && (
                 <div className="mt-3">
-                    <p className="text-[8px] font-black uppercase text-slate-400">
+                    <p className="text-[10px] font-black uppercase text-slate-400">
                         Not Playing
                     </p>
 
-                    <div className="mt-1 grid grid-cols-2 gap-1">
+                    <div className="mt-2 grid grid-cols-2 gap-2">
                         {notPlaying.map((player) => (
                             <div
                                 key={player.id}
-                                className="truncate rounded-lg bg-slate-50 px-2 py-1.5 text-[8px] font-bold text-slate-400 dark:bg-slate-800/70"
+                                className="truncate rounded-lg bg-slate-50 px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:bg-slate-800/70"
                             >
                                 {player.name}
                             </div>
@@ -1400,21 +1458,21 @@ function StatusPanel({
     detail,
 }) {
     return (
-        <div className="flex min-h-0 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20">
+        <div className="flex min-h-[360px] items-center justify-center rounded-3xl border border-amber-200 bg-amber-50 p-8 dark:border-amber-900/50 dark:bg-amber-950/20">
             <div className="px-5 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">
                     {icon}
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-400">
+                <p className="mt-5 text-[10px] font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-400">
                     {title}
                 </p>
 
-                <h2 className="mt-1 text-xl font-black text-slate-950 dark:text-white">
+                <h2 className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
                     {description}
                 </h2>
 
-                <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-slate-500 dark:text-slate-400">
+                <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-500 dark:text-slate-400">
                     {detail}
                 </p>
             </div>
@@ -1428,12 +1486,12 @@ function StatusPanel({
 
 function InfoBox({ label, value }) {
     return (
-        <div className="rounded-xl bg-slate-50 px-2 py-2 text-center dark:bg-slate-800/70">
-            <p className="text-[7px] font-black uppercase tracking-wider text-slate-400">
+        <div className="rounded-2xl bg-slate-50 px-3 py-2.5 text-center dark:bg-slate-800/70">
+            <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
                 {label}
             </p>
 
-            <p className="mt-0.5 truncate text-[9px] font-black text-slate-700 dark:text-slate-200">
+            <p className="mt-0.5 truncate text-[11px] font-black text-slate-700 dark:text-slate-200">
                 {value}
             </p>
         </div>
@@ -1442,12 +1500,12 @@ function InfoBox({ label, value }) {
 
 function SectionTitle({ icon, title }) {
     return (
-        <div className="flex shrink-0 items-center gap-1.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
+        <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
                 {icon}
             </div>
 
-            <h2 className="text-[10px] font-black text-slate-900 dark:text-white">
+            <h2 className="text-sm font-black text-slate-900 dark:text-white">
                 {title}
             </h2>
         </div>
