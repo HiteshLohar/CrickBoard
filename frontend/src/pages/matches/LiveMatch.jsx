@@ -33,6 +33,7 @@ import {
     setOpeningPlayers,
     setNewBatter,
     setNewBowler,
+    undoLastBall,
 } from '../../services/api/scoring.api'
 
 const wicketTypes = [
@@ -273,6 +274,8 @@ function LiveMatch() {
 
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
+
+    const [undoing, setUndoing] = useState(false)
 
     const [error, setError] = useState('')
     const [successMessage, setSuccessMessage] = useState('')
@@ -802,6 +805,109 @@ function LiveMatch() {
             )
         } finally {
             setSubmitting(false)
+        }
+    }
+
+    const handleUndoLastBall = async () => {
+        setError('')
+        setSuccessMessage('')
+
+        if (!innings || Number(innings.deliverySequence || 0) <= 0) {
+            setError('There is no ball available to undo.')
+            return
+        }
+
+        setUndoing(true)
+
+        try {
+            const response = await undoLastBall(matchId)
+
+            if (!response.success) {
+                throw new Error(
+                    response.message ||
+                    'Failed to undo the last ball.',
+                )
+            }
+
+            const [
+                matchResponse,
+                inningsResponse,
+                ballsResponse,
+            ] = await Promise.all([
+                getMatchById(matchId),
+                getCurrentInnings(matchId),
+                getBallEvents(matchId, { limit: 100 }),
+            ])
+
+            if (!matchResponse.success) {
+                throw new Error(
+                    matchResponse.message ||
+                    'Failed to refresh match.',
+                )
+            }
+
+            if (!inningsResponse.success) {
+                throw new Error(
+                    inningsResponse.message ||
+                    'Failed to refresh innings.',
+                )
+            }
+
+            const ballEvents =
+                ballsResponse?.data?.balls ||
+                ballsResponse?.data?.events ||
+                ballsResponse?.data?.items ||
+                ballsResponse?.data?.docs ||
+                (Array.isArray(ballsResponse?.data)
+                    ? ballsResponse.data
+                    : [])
+
+            const dismissedIds = ballEvents
+                .filter((ball) => Boolean(ball?.wicket?.isWicket))
+                .map((ball) =>
+                    String(
+                        ball?.wicket?.playerOut?._id ||
+                        ball?.wicket?.playerOut,
+                    ),
+                )
+                .filter(
+                    (id) =>
+                        id &&
+                        id !== 'undefined' &&
+                        id !== 'null',
+                )
+
+            setMatch(matchResponse.data)
+            setInnings(inningsResponse.data)
+            setDismissedBatterIds([
+                ...new Set(dismissedIds),
+            ])
+
+            setOpeningPlayersSet(
+                !inningsResponse.data?.requiresOpeningPlayers,
+            )
+
+            setNewBatterPlayer('')
+            setNewBowlerPlayer('')
+            setPlayerOut('')
+            setWicketKind('BOWLED')
+
+            setBallForm({
+                runs: 0,
+                commentary: '',
+            })
+
+            setSuccessMessage(
+                'Last ball undone successfully.',
+            )
+        } catch (error) {
+            setError(
+                error.response?.data?.message ||
+                error.message ||
+                'Unable to undo the last ball.',
+            )
+        } finally {
+            setUndoing(false)
         }
     }
 
@@ -1397,11 +1503,33 @@ function LiveMatch() {
                                         {/* Undo */}
                                         <button
                                             type="button"
-                                            disabled={submitting}
+                                            onClick={() => {
+                                                const confirmed = window.confirm(
+                                                    'Are you sure you want to undo the last ball?',
+                                                )
+
+                                                if (confirmed) {
+                                                    handleUndoLastBall()
+                                                }
+                                            }}
+                                            disabled={
+                                                submitting ||
+                                                undoing ||
+                                                !innings ||
+                                                Number(innings.deliverySequence || 0) <= 0
+                                            }
                                             className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-5 py-3 text-sm font-black uppercase tracking-wide text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-200 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-700"
                                         >
-                                            <Undo2 size={18} />
-                                            UNDO
+                                            {undoing ? (
+                                                <Loader2
+                                                    size={18}
+                                                    className="animate-spin"
+                                                />
+                                            ) : (
+                                                <Undo2 size={18} />
+                                            )}
+
+                                            {undoing ? 'UNDOING...' : 'UNDO'}
                                         </button>
 
                                         {/* Record Ball */}

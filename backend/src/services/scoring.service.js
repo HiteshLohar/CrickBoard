@@ -1908,3 +1908,580 @@ export const getBallEvents = async (
         },
     };
 };
+
+
+/*
+ * =========================================================
+ * Undo last ball event
+ * =========================================================
+ */
+
+const processUndoTransaction = async (
+    matchId,
+    userId,
+    session
+) => {
+    /*
+     * -------------------------------------------------------
+     * 1. Find match owned by current user
+     * -------------------------------------------------------
+     */
+
+    const match =
+        await Match.findOne({
+            _id: matchId,
+            createdBy: userId,
+        }).session(session);
+
+    if (!match) {
+        throw createError(
+            "Match not found",
+            404
+        );
+    }
+
+    /*
+     * -------------------------------------------------------
+     * 2. Find the latest ball
+     * -------------------------------------------------------
+     *
+     * We intentionally find the latest BallEvent globally
+     * for this match.
+     *
+     * This also handles the special case where innings 1
+     * has just completed and innings 2 has been automatically
+     * created but no ball has been recorded yet.
+     */
+
+    const lastBall =
+        await BallEvent.findOne({
+            match: match._id,
+        })
+            .sort({
+                deliveryNumber: -1,
+                _id: -1,
+            })
+            .session(session);
+
+    if (!lastBall) {
+        throw createError(
+            "No ball event available to undo.",
+            404
+        );
+    }
+
+    /*
+     * -------------------------------------------------------
+     * 3. Find innings belonging to the last ball
+     * -------------------------------------------------------
+     */
+
+    const innings =
+        await Innings.findById(
+            lastBall.innings
+        ).session(session);
+
+    if (!innings) {
+        throw createError(
+            "Innings for the last ball was not found.",
+            404
+        );
+    }
+
+    /*
+     * -------------------------------------------------------
+     * 4. Safety check
+     * -------------------------------------------------------
+     *
+     * The last BallEvent must actually belong to the
+     * latest scoring sequence.
+     */
+
+    if (
+        innings.deliverySequence !==
+        lastBall.deliveryNumber
+    ) {
+        throw createError(
+            "Unable to safely undo the last ball because the delivery sequence is inconsistent.",
+            409
+        );
+    }
+
+    /*
+     * -------------------------------------------------------
+     * 5. Capture previous state from the BallEvent
+     * -------------------------------------------------------
+     *
+     * BallEvent stores striker, non-striker and bowler
+     * as they were when the ball was recorded.
+     */
+
+    const previousStriker =
+        lastBall.striker;
+
+    const previousNonStriker =
+        lastBall.nonStriker;
+
+    const previousBowler =
+        lastBall.bowler;
+
+    const wasLegalDelivery =
+        lastBall.isLegalDelivery;
+
+    const totalRuns =
+        lastBall.runs?.total || 0;
+
+    const extraRuns =
+        lastBall.runs?.extras || 0;
+
+    const wasWicket =
+        lastBall.wicket?.isWicket === true;
+
+    const dismissedPlayer =
+        wasWicket
+            ? lastBall.wicket?.playerOut
+            : null;
+
+    /*
+     * -------------------------------------------------------
+     * 6. Determine whether this ball completed an over
+     * -------------------------------------------------------
+     *
+     * The ball number stored by the server is the position
+     * of this delivery among legal balls.
+     *
+     * A legal ball whose legal ball count was divisible by 6
+     * completed the over.
+     */
+
+    const overCompleted =
+        wasLegalDelivery &&
+        innings.legalBalls % 6 === 0;
+
+    /*
+     * -------------------------------------------------------
+     * 7. Restore innings score
+     * -------------------------------------------------------
+     */
+
+    innings.totalRuns =
+        Math.max(
+            0,
+            innings.totalRuns -
+                totalRuns
+        );
+
+    innings.totalExtras =
+        Math.max(
+            0,
+            innings.totalExtras -
+                extraRuns
+        );
+
+    if (wasWicket) {
+        innings.totalWickets =
+            Math.max(
+                0,
+                innings.totalWickets - 1
+            );
+    }
+
+    if (wasLegalDelivery) {
+        innings.legalBalls =
+            Math.max(
+                0,
+                innings.legalBalls - 1
+            );
+    }
+
+    innings.deliverySequence =
+        Math.max(
+            0,
+            innings.deliverySequence - 1
+        );
+
+    /*
+     * -------------------------------------------------------
+     * 8. Restore dismissed player
+     * -------------------------------------------------------
+     */
+
+    if (
+        wasWicket &&
+        dismissedPlayer
+    ) {
+        innings.dismissedPlayers =
+            innings.dismissedPlayers.filter(
+                (player) =>
+                    !isSameId(
+                        player,
+                        dismissedPlayer
+                    )
+            );
+    }
+
+    /*
+     * -------------------------------------------------------
+     * 9. Restore crease
+     * -------------------------------------------------------
+     *
+     * The BallEvent contains the striker/non-striker that
+     * existed BEFORE this ball.
+     *
+     * Therefore these are the safest values to restore.
+     */
+
+    innings.striker =
+        previousStriker;
+
+    innings.nonStriker =
+        previousNonStriker;
+
+    innings.currentBowler =
+        previousBowler;
+
+    /*
+     * -------------------------------------------------------
+     * 10. Restore over state
+     * -------------------------------------------------------
+     *
+     * If the undone ball was the 6th legal delivery,
+     * the previous state did NOT require a new bowler.
+     */
+
+    if (overCompleted) {
+        innings.requiresNewBowler =
+            false;
+    } else {
+        /*
+         * For all other balls we restore the state that
+         * existed before the ball.
+         *
+         * A normal previous ball cannot leave
+         * requiresNewBowler=true because another ball could
+         * not legally have been recorded in that state.
+         */
+        innings.requiresNewBowler =
+            false;
+    }
+
+    /*
+     * -------------------------------------------------------
+     * 11. Restore innings status
+     * -------------------------------------------------------
+     */
+
+    innings.status =
+        "LIVE";
+
+    innings.completedAt =
+        null;
+
+    /*
+     * -------------------------------------------------------
+     * 12. Special case:
+     *     Undo first-innings completion
+     * -------------------------------------------------------
+     *
+     * When innings 1 completed, processBallTransaction()
+     * automatically created innings 2 and changed:
+     *
+     * match.currentInnings = 2
+     *
+     * If the last ball belongs to innings 1, that means
+     * innings 2 has not received any ball yet.
+     *
+     * Remove innings 2 and restore innings 1.
+     */
+
+    if (
+        innings.inningsNumber === 1 &&
+        match.currentInnings === 2
+    ) {
+        const secondInnings =
+            await Innings.findOne({
+                match: match._id,
+                inningsNumber: 2,
+            }).session(session);
+
+        if (secondInnings) {
+            const secondInningsBall =
+                await BallEvent.exists({
+                    match: match._id,
+                    innings: secondInnings._id,
+                }).session(session);
+
+            if (!secondInningsBall) {
+                await Innings.deleteOne(
+                    {
+                        _id: secondInnings._id,
+                    },
+                    {
+                        session,
+                    }
+                );
+
+                match.currentInnings =
+                    1;
+            }
+        }
+    }
+
+    /*
+     * -------------------------------------------------------
+     * 13. Restore match state
+     * -------------------------------------------------------
+     *
+     * If the undone ball was the final ball of innings 2,
+     * the original scoring transaction may have changed:
+     *
+     * LIVE -> COMPLETED
+     *
+     * and assigned result/winner/completedAt.
+     */
+
+    if (
+        match.status === "COMPLETED"
+    ) {
+        match.status =
+            "LIVE";
+
+        match.result =
+            undefined;
+
+        match.winner =
+            undefined;
+
+        match.completedAt =
+            null;
+    }
+
+    /*
+     * -------------------------------------------------------
+     * 14. Delete last BallEvent
+     * -------------------------------------------------------
+     */
+
+    await BallEvent.deleteOne(
+        {
+            _id: lastBall._id,
+        },
+        {
+            session,
+        }
+    );
+
+    /*
+     * -------------------------------------------------------
+     * 15. Save restored innings
+     * -------------------------------------------------------
+     */
+
+    await innings.save({
+        session,
+    });
+
+    /*
+     * -------------------------------------------------------
+     * 16. Save restored match
+     * -------------------------------------------------------
+     */
+
+    await match.save({
+        session,
+    });
+
+    /*
+     * -------------------------------------------------------
+     * 17. Return undo result
+     * -------------------------------------------------------
+     */
+
+    return {
+        undoneBallId:
+            lastBall._id,
+
+        inningsId:
+            innings._id,
+
+        inningsNumber:
+            innings.inningsNumber,
+
+        overNumber:
+            lastBall.overNumber,
+
+        ballNumber:
+            lastBall.ballNumber,
+
+        restored: {
+            totalRuns:
+                innings.totalRuns,
+
+            totalWickets:
+                innings.totalWickets,
+
+            totalExtras:
+                innings.totalExtras,
+
+            legalBalls:
+                innings.legalBalls,
+
+            deliverySequence:
+                innings.deliverySequence,
+
+            striker:
+                innings.striker,
+
+            nonStriker:
+                innings.nonStriker,
+
+            currentBowler:
+                innings.currentBowler,
+
+            requiresNewBowler:
+                innings.requiresNewBowler,
+
+            inningsStatus:
+                innings.status,
+
+            matchStatus:
+                match.status,
+
+            currentInnings:
+                match.currentInnings,
+
+            result:
+                match.result || null,
+
+            winner:
+                match.winner || null,
+        },
+    };
+};
+
+/*
+ * =========================================================
+ * Undo last ball event
+ * =========================================================
+ */
+
+export const undoLastBallEvent = async (
+    matchId,
+    userId
+) => {
+    /*
+     * -------------------------------------------------------
+     * Validate match ID
+     * -------------------------------------------------------
+     */
+
+    if (
+        !mongoose.isValidObjectId(
+            matchId
+        )
+    ) {
+        throw createError(
+            "Invalid match ID.",
+            400
+        );
+    }
+
+    /*
+     * -------------------------------------------------------
+     * Validate user ID
+     * -------------------------------------------------------
+     */
+
+    if (
+        !mongoose.isValidObjectId(
+            userId
+        )
+    ) {
+        throw createError(
+            "Invalid user ID.",
+            400
+        );
+    }
+
+    let lastError;
+
+    /*
+     * -------------------------------------------------------
+     * Retry transaction conflicts
+     * -------------------------------------------------------
+     */
+
+    for (
+        let attempt = 1;
+        attempt <=
+        MAX_TRANSACTION_RETRIES;
+        attempt += 1
+    ) {
+        const session =
+            await mongoose.startSession();
+
+        try {
+            let result;
+
+            await session.withTransaction(
+                async () => {
+                    result =
+                        await processUndoTransaction(
+                            matchId,
+                            userId,
+                            session
+                        );
+                },
+                {
+                    readConcern: {
+                        level: "snapshot",
+                    },
+
+                    writeConcern: {
+                        w: "majority",
+                    },
+
+                    readPreference:
+                        "primary",
+                }
+            );
+
+            const populatedInnings =
+                await populateInnings(
+                    result.inningsId
+                );
+
+            return {
+                undoneBallId:
+                    result.undoneBallId,
+
+                innings:
+                    populatedInnings,
+
+                restored:
+                    result.restored,
+            };
+        } catch (error) {
+            lastError =
+                error;
+
+            if (
+                !isTransactionRetryable(
+                    error
+                ) ||
+                attempt ===
+                MAX_TRANSACTION_RETRIES
+            ) {
+                throw error;
+            }
+
+            await sleep(
+                25 * attempt
+            );
+        } finally {
+            await session.endSession();
+        }
+    }
+
+    throw lastError;
+};

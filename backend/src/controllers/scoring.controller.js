@@ -1,6 +1,7 @@
 import {
     recordBallEvent,
     getBallEvents,
+    undoLastBallEvent,
 } from "../services/scoring.service.js";
 
 export const recordBall = async (
@@ -49,6 +50,29 @@ export const getBalls = async (
             success: true,
             message:
                 "Ball events fetched successfully",
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const undoLastBall = async (
+    req,
+    res,
+    next
+) => {
+    try {
+        const result =
+            await undoLastBallEvent(
+                req.params.matchId,
+                req.user.userId
+            );
+
+        res.status(200).json({
+            success: true,
+            message:
+                "Last ball undone successfully",
             data: result,
         });
     } catch (error) {

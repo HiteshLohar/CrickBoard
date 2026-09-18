@@ -107,6 +107,14 @@ export const getBallEvents = async (
     return response.data
 }
 
+export const undoLastBall = async (matchId) => {
+    const response = await api.post(
+        `/matches/${matchId}/balls/undo`,
+    )
+
+    return response.data
+}
+
 export const getMatchScorecard = async (matchId) => {
     const response = await api.get(
         `/matches/${matchId}/scorecard`,

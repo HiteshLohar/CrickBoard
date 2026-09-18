@@ -16,6 +16,7 @@ import {
 import {
     recordBall,
     getBalls,
+    undoLastBall,
 } from "../controllers/scoring.controller.js";
 
 import {
@@ -46,6 +47,14 @@ router.post(
     authentication,
     validate(createBallEventSchema),
     recordBall
+);
+
+// Undo last ball
+
+router.post(
+    "/:matchId/balls/undo",
+    authentication,
+    undoLastBall
 );
 
 // Select new batter after wicket
