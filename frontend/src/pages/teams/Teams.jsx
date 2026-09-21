@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
     Check,
     Edit3,
     Plus,
     Search,
     Shield,
-    Trash2,
     UserPlus,
     Users,
     X,
@@ -38,50 +37,79 @@ const initialTeamForm = {
 }
 
 function Teams() {
+    const searchParams = new URLSearchParams(
+        window.location.search,
+    )
+
+    const excludeTeamId =
+        searchParams.get('excludeTeam') || null
+
+    const excludePlayerIds = (
+        searchParams.get('excludePlayers') || ''
+    )
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+
     const [teams, setTeams] = useState([])
     const [players, setPlayers] = useState([])
 
-    const [formData, setFormData] = useState(initialTeamForm)
-    const [selectedPlayers, setSelectedPlayers] = useState([])
+    const [formData, setFormData] =
+        useState(initialTeamForm)
 
-    const [editingTeamId, setEditingTeamId] = useState(null)
+    const [selectedPlayers, setSelectedPlayers] =
+        useState([])
+
+    const [editingTeamId, setEditingTeamId] =
+        useState(null)
+
     const [editFormData, setEditFormData] =
         useState(initialTeamForm)
 
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
+
+    const [highlightedTeamId, setHighlightedTeamId] =
+        useState(null)
+
     const [updating, setUpdating] = useState(false)
-    const [addingPlayer, setAddingPlayer] = useState(false)
-    const [removingPlayer, setRemovingPlayer] = useState(false)
+    const [addingPlayer, setAddingPlayer] =
+        useState(false)
+
+    const [removingPlayer, setRemovingPlayer] =
+        useState(false)
 
     const [createPlayerSearch, setCreatePlayerSearch] =
         useState('')
 
     const [error, setError] = useState('')
-    const [successMessage, setSuccessMessage] = useState('')
+    const [successMessage, setSuccessMessage] =
+        useState('')
 
     const loadTeamsAndPlayers = async () => {
         setLoading(true)
         setError('')
 
         try {
-            const [teamsResponse, playersResponse] =
-                await Promise.all([
-                    getTeams(),
-                    getPlayers(),
-                ])
+            const [
+                teamsResponse,
+                playersResponse,
+            ] = await Promise.all([
+                getTeams(),
+                getPlayers(),
+            ])
 
             if (!teamsResponse.success) {
                 throw new Error(
                     teamsResponse.message ||
-                        'Failed to fetch teams',
+                    'Failed to fetch teams',
                 )
             }
 
             if (!playersResponse.success) {
                 throw new Error(
                     playersResponse.message ||
-                        'Failed to fetch players',
+                    'Failed to fetch players',
                 )
             }
 
@@ -90,8 +118,8 @@ function Teams() {
         } catch (error) {
             setError(
                 error.response?.data?.message ||
-                    error.message ||
-                    'Unable to load teams.',
+                error.message ||
+                'Unable to load teams.',
             )
         } finally {
             setLoading(false)
@@ -102,8 +130,50 @@ function Teams() {
         loadTeamsAndPlayers()
     }, [])
 
+    /*
+     * When Teams is opened from another page with:
+     *
+     * /teams#team-TEAM_ID
+     *
+     * scroll to that team and highlight it.
+     */
+    useEffect(() => {
+        if (loading || teams.length === 0) return
+
+        const hash = window.location.hash
+
+        if (!hash.startsWith('#team-')) return
+
+        const teamId = hash.replace('#team-', '')
+
+        const target = document.getElementById(
+            `team-${teamId}`,
+        )
+
+        if (!target) return
+
+        setHighlightedTeamId(teamId)
+
+        const scrollTimer = window.setTimeout(() => {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            })
+        }, 100)
+
+        const highlightTimer = window.setTimeout(() => {
+            setHighlightedTeamId(null)
+        }, 3000)
+
+        return () => {
+            window.clearTimeout(scrollTimer)
+            window.clearTimeout(highlightTimer)
+        }
+    }, [loading, teams])
+
     const filteredCreatePlayers = useMemo(() => {
-        const query = createPlayerSearch.trim().toLowerCase()
+        const query =
+            createPlayerSearch.trim().toLowerCase()
 
         if (!query) {
             return players
@@ -111,7 +181,9 @@ function Teams() {
 
         return players.filter(
             (player) =>
-                player.name?.toLowerCase().includes(query) ||
+                player.name
+                    ?.toLowerCase()
+                    .includes(query) ||
                 player.shortName
                     ?.toLowerCase()
                     .includes(query),
@@ -186,9 +258,17 @@ function Teams() {
             if (!response.success) {
                 throw new Error(
                     response.message ||
-                        'Failed to create team',
+                    'Failed to create team',
                 )
             }
+
+            /*
+             * Notify other tabs, such as MatchSetup.
+             */
+            window.localStorage.setItem(
+                'crickboard-teams-updated',
+                Date.now().toString(),
+            )
 
             setTeams((previous) => [
                 response.data,
@@ -205,8 +285,8 @@ function Teams() {
         } catch (error) {
             setError(
                 error.response?.data?.message ||
-                    error.message ||
-                    'Unable to create team.',
+                error.message ||
+                'Unable to create team.',
             )
         } finally {
             setSubmitting(false)
@@ -238,14 +318,15 @@ function Teams() {
                 editingTeamId,
                 {
                     name: editFormData.name.trim(),
-                    shortName: editFormData.shortName.trim(),
+                    shortName:
+                        editFormData.shortName.trim(),
                 },
             )
 
             if (!response.success) {
                 throw new Error(
                     response.message ||
-                        'Failed to update team',
+                    'Failed to update team',
                 )
             }
 
@@ -257,6 +338,14 @@ function Teams() {
                 ),
             )
 
+            /*
+             * Notify other tabs about the team update.
+             */
+            window.localStorage.setItem(
+                'crickboard-teams-updated',
+                Date.now().toString(),
+            )
+
             setEditingTeamId(null)
             setEditFormData(initialTeamForm)
 
@@ -266,15 +355,18 @@ function Teams() {
         } catch (error) {
             setError(
                 error.response?.data?.message ||
-                    error.message ||
-                    'Unable to update team.',
+                error.message ||
+                'Unable to update team.',
             )
         } finally {
             setUpdating(false)
         }
     }
 
-    const handleAddPlayer = async (teamId, playerId) => {
+    const handleAddPlayer = async (
+        teamId,
+        playerId,
+    ) => {
         setError('')
         setSuccessMessage('')
         setAddingPlayer(true)
@@ -288,7 +380,7 @@ function Teams() {
             if (!response.success) {
                 throw new Error(
                     response.message ||
-                        'Failed to add player to team',
+                    'Failed to add player to team',
                 )
             }
 
@@ -300,16 +392,25 @@ function Teams() {
                 ),
             )
 
+            /*
+             * This event is received by MatchSetup
+             * when it is open in another browser tab.
+             */
+            window.localStorage.setItem(
+                'crickboard-teams-updated',
+                Date.now().toString(),
+            )
+
             setSuccessMessage(
                 response.message ||
-                    'Player added to team successfully.',
+                'Player added to team successfully.',
             )
         } catch (error) {
             setError(
                 error.response?.data?.message ||
-                    error.response?.data?.error ||
-                    error.message ||
-                    'Unable to add player to team.',
+                error.response?.data?.error ||
+                error.message ||
+                'Unable to add player to team.',
             )
         } finally {
             setAddingPlayer(false)
@@ -325,15 +426,16 @@ function Teams() {
         setRemovingPlayer(true)
 
         try {
-            const response = await removePlayerFromTeam(
-                teamId,
-                playerId,
-            )
+            const response =
+                await removePlayerFromTeam(
+                    teamId,
+                    playerId,
+                )
 
             if (!response.success) {
                 throw new Error(
                     response.message ||
-                        'Failed to remove player from team',
+                    'Failed to remove player from team',
                 )
             }
 
@@ -345,16 +447,24 @@ function Teams() {
                 ),
             )
 
+            /*
+             * Notify other tabs about the squad change.
+             */
+            window.localStorage.setItem(
+                'crickboard-teams-updated',
+                Date.now().toString(),
+            )
+
             setSuccessMessage(
                 response.message ||
-                    'Player removed from team successfully.',
+                'Player removed from team successfully.',
             )
         } catch (error) {
             setError(
                 error.response?.data?.message ||
-                    error.response?.data?.error ||
-                    error.message ||
-                    'Unable to remove player from team.',
+                error.response?.data?.error ||
+                error.message ||
+                'Unable to remove player from team.',
             )
         } finally {
             setRemovingPlayer(false)
@@ -449,8 +559,11 @@ function Teams() {
 
                 <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
                     <Shield className="h-4 w-4 text-brand-500" />
+
                     {teams.length}{' '}
-                    {teams.length === 1 ? 'Team' : 'Teams'}
+                    {teams.length === 1
+                        ? 'Team'
+                        : 'Teams'}
                 </div>
             </div>
 
@@ -487,8 +600,8 @@ function Teams() {
                             </h2>
 
                             <p className="text-xs text-slate-400">
-                                Select {MIN_PLAYERS}–{MAX_PLAYERS}{' '}
-                                players
+                                Select {MIN_PLAYERS}–
+                                {MAX_PLAYERS} players
                             </p>
                         </div>
                     </div>
@@ -564,7 +677,9 @@ function Teams() {
                             totalPlayers={players.length}
                             selectedPlayers={selectedPlayers}
                             search={createPlayerSearch}
-                            onSearchChange={setCreatePlayerSearch}
+                            onSearchChange={
+                                setCreatePlayerSearch
+                            }
                             onToggle={togglePlayer}
                         />
                     </div>
@@ -575,7 +690,7 @@ function Teams() {
                             disabled={
                                 submitting ||
                                 selectedPlayers.length <
-                                    MIN_PLAYERS
+                                MIN_PLAYERS
                             }
                             className="w-full sm:w-auto"
                         >
@@ -624,7 +739,7 @@ function Teams() {
 
                     <form
                         onSubmit={handleUpdateSubmit}
-                        className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.5fr_0.7fr_1fr_auto]"
+                        className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.5fr_0.7fr_auto]"
                     >
                         <FormField
                             label="Team Name"
@@ -651,25 +766,13 @@ function Teams() {
                                 id="edit-team-short-name"
                                 name="shortName"
                                 type="text"
-                                value={editFormData.shortName}
+                                value={
+                                    editFormData.shortName
+                                }
                                 onChange={handleEditChange}
                                 minLength={1}
                                 maxLength={10}
                                 required
-                                className={inputClass}
-                            />
-                        </FormField>
-
-                        <FormField
-                            label="Logo URL"
-                            htmlFor="edit-team-logo"
-                        >
-                            <input
-                                id="edit-team-logo"
-                                name="logo"
-                                type="url"
-                                value={editFormData.logo}
-                                onChange={handleEditChange}
                                 className={inputClass}
                             />
                         </FormField>
@@ -699,7 +802,10 @@ function Teams() {
             )}
 
             {/* Teams */}
-            <Card padding="p-0" className="overflow-hidden">
+            <Card
+                padding="p-0"
+                className="overflow-visible"
+            >
                 <div className="border-b border-slate-200 p-5 dark:border-slate-800 sm:p-6">
                     <div>
                         <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -729,8 +835,20 @@ function Teams() {
                                 players={players}
                                 addingPlayer={addingPlayer}
                                 removingPlayer={removingPlayer}
+                                highlighted={
+                                    highlightedTeamId ===
+                                    team._id
+                                }
+                                excludedTeamId={
+                                    excludeTeamId
+                                }
+                                excludedPlayerIds={
+                                    excludePlayerIds
+                                }
                                 onEdit={handleEdit}
-                                onAddPlayer={handleAddPlayer}
+                                onAddPlayer={
+                                    handleAddPlayer
+                                }
                                 onRemovePlayer={
                                     handleRemovePlayer
                                 }
@@ -746,7 +864,11 @@ function Teams() {
 const inputClass =
     'h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500'
 
-function FormField({ label, htmlFor, children }) {
+function FormField({
+    label,
+    htmlFor,
+    children,
+}) {
     return (
         <div>
             <label
@@ -801,7 +923,8 @@ function PlayerSelector({
                     </div>
 
                     <div className="shrink-0 rounded-xl bg-brand-100 px-3 py-2 text-xs font-bold text-brand-700 dark:bg-brand-500/10 dark:text-brand-400">
-                        {selectedPlayers.length}/{MAX_PLAYERS}
+                        {selectedPlayers.length}/
+                        {MAX_PLAYERS}
                     </div>
                 </div>
             </div>
@@ -838,7 +961,7 @@ function PlayerSelector({
                             const disabled =
                                 !isSelected &&
                                 selectedPlayers.length >=
-                                    MAX_PLAYERS
+                                MAX_PLAYERS
 
                             return (
                                 <button
@@ -846,7 +969,9 @@ function PlayerSelector({
                                     type="button"
                                     disabled={disabled}
                                     onClick={() =>
-                                        onToggle(player._id)
+                                        onToggle(
+                                            player._id,
+                                        )
                                     }
                                     className={[
                                         'flex items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200',
@@ -889,11 +1014,10 @@ function PlayerSelector({
                                     </div>
 
                                     <span className="hidden text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:block">
-                                        {player.role
-                                            ?.replace(
-                                                /_/g,
-                                                ' ',
-                                            )}
+                                        {player.role?.replace(
+                                            /_/g,
+                                            ' ',
+                                        )}
                                     </span>
                                 </button>
                             )
@@ -910,27 +1034,78 @@ function TeamCard({
     players,
     addingPlayer,
     removingPlayer,
+    highlighted,
     onEdit,
     onAddPlayer,
     onRemovePlayer,
+    excludedPlayerIds = [],
+    excludedTeamId = null,
 }) {
+    /*
+     * Normalize IDs to strings.
+     */
+    const normalizedTeamId = String(
+        team?._id || '',
+    )
+
+    const normalizedExcludedTeamId =
+        excludedTeamId
+            ? String(excludedTeamId)
+            : null
+
+    const normalizedExcludedPlayerIds =
+        new Set(
+            excludedPlayerIds.map((id) =>
+                String(id),
+            ),
+        )
+
+    /*
+     * Players already present in this team's squad.
+     */
     const teamPlayerIds =
-        team.players?.map((player) =>
-            typeof player === 'string'
-                ? player
-                : player._id,
+        team?.players?.map((player) =>
+            String(
+                typeof player === 'string'
+                    ? player
+                    : player?._id || '',
+            ),
         ) || []
 
+    /*
+     * Players available for this team's
+     * Add Player dropdown.
+     */
     const availablePlayers = players.filter(
-        (player) =>
-            !teamPlayerIds.includes(player._id),
+        (player) => {
+            const playerId = String(
+                player?._id || '',
+            )
+
+            const alreadyInTeam =
+                teamPlayerIds.includes(playerId)
+
+            const excludedFromPlayingXI =
+                normalizedTeamId ===
+                normalizedExcludedTeamId &&
+                normalizedExcludedPlayerIds.has(
+                    playerId,
+                )
+
+            return (
+                !alreadyInTeam &&
+                !excludedFromPlayingXI
+            )
+        },
     )
 
     const getPlayerName = (player) => {
         if (typeof player === 'string') {
             return (
                 players.find(
-                    (item) => item._id === player,
+                    (item) =>
+                        String(item._id) ===
+                        String(player),
                 )?.name || player
             )
         }
@@ -939,7 +1114,15 @@ function TeamCard({
     }
 
     return (
-        <article className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
+        <article
+            id={`team-${team._id}`}
+            className={[
+                'group relative scroll-mt-6 overflow-visible rounded-2xl border bg-white shadow-sm transition-shadow duration-300 hover:shadow-lg dark:bg-slate-900',
+                highlighted
+                    ? 'border-brand-500 ring-4 ring-brand-500/20 shadow-xl shadow-brand-500/20 dark:border-brand-400 dark:ring-brand-400/20'
+                    : 'border-slate-200 dark:border-slate-800',
+            ].join(' ')}
+        >
             {/* Team Header */}
             <div className="relative overflow-hidden border-b border-slate-100 p-5 dark:border-slate-800">
                 <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-brand-500/5 blur-2xl" />
@@ -977,7 +1160,8 @@ function TeamCard({
                         <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
                             <Users className="h-3.5 w-3.5" />
 
-                            {team.players?.length || 0} players
+                            {team.players?.length || 0}{' '}
+                            players
                         </div>
                     </div>
 
@@ -1000,7 +1184,8 @@ function TeamCard({
                     </p>
 
                     <span className="text-xs font-medium text-slate-400">
-                        {team.players?.length || 0}/{MAX_PLAYERS}
+                        {team.players?.length || 0}/
+                        {MAX_PLAYERS}
                     </span>
                 </div>
 
@@ -1018,28 +1203,32 @@ function TeamCard({
                                     className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 dark:border-slate-700 dark:bg-slate-950"
                                 >
                                     <span className="max-w-32 truncate text-xs font-medium text-slate-700 dark:text-slate-300">
-                                        {getPlayerName(player)}
+                                        {getPlayerName(
+                                            player,
+                                        )}
                                     </span>
 
                                     {team.players.length >
                                         MIN_PLAYERS && (
-                                        <button
-                                            type="button"
-                                            disabled={
-                                                removingPlayer
-                                            }
-                                            onClick={() =>
-                                                onRemovePlayer(
-                                                    team._id,
-                                                    playerId,
-                                                )
-                                            }
-                                            aria-label={`Remove ${getPlayerName(player)}`}
-                                            className="text-slate-400 transition hover:text-red-500 disabled:opacity-50"
-                                        >
-                                            <X className="h-3.5 w-3.5" />
-                                        </button>
-                                    )}
+                                            <button
+                                                type="button"
+                                                disabled={
+                                                    removingPlayer
+                                                }
+                                                onClick={() =>
+                                                    onRemovePlayer(
+                                                        team._id,
+                                                        playerId,
+                                                    )
+                                                }
+                                                aria-label={`Remove ${getPlayerName(
+                                                    player,
+                                                )}`}
+                                                className="text-slate-400 transition hover:text-red-500 disabled:opacity-50"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                        )}
                                 </div>
                             )
                         })}
@@ -1054,41 +1243,17 @@ function TeamCard({
             {/* Actions */}
             <div className="grid gap-2 border-t border-slate-100 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40">
                 {team.players?.length < MAX_PLAYERS && (
-                    <div className="relative">
-                        <UserPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                        <select
-                            value=""
-                            onChange={(event) => {
-                                if (event.target.value) {
-                                    onAddPlayer(
-                                        team._id,
-                                        event.target.value,
-                                    )
-                                }
-                            }}
-                            disabled={addingPlayer}
-                            className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium text-slate-600 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                        >
-                            <option value="">
-                                {addingPlayer
-                                    ? 'Adding player...'
-                                    : 'Add player to squad'}
-                            </option>
-
-                            {availablePlayers.map(
-                                (player) => (
-                                    <option
-                                        key={player._id}
-                                        value={player._id}
-                                    >
-                                        {player.name} (
-                                        {player.shortName})
-                                    </option>
-                                ),
-                            )}
-                        </select>
-                    </div>
+                    <PlayerDropdown
+                        players={availablePlayers}
+                        disabled={addingPlayer}
+                        loading={addingPlayer}
+                        onSelect={(playerId) =>
+                            onAddPlayer(
+                                team._id,
+                                playerId,
+                            )
+                        }
+                    />
                 )}
 
                 <div className="flex items-center justify-between gap-2">
@@ -1107,6 +1272,304 @@ function TeamCard({
                 </div>
             </div>
         </article>
+    )
+}
+
+function PlayerDropdown({
+    players,
+    disabled,
+    loading,
+    onSelect,
+}) {
+    const [open, setOpen] = useState(false)
+    const [search, setSearch] = useState('')
+
+    const dropdownRef = useRef(null)
+    const searchInputRef = useRef(null)
+
+    useEffect(() => {
+        const handleOutsideClick = (event) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(
+                    event.target,
+                )
+            ) {
+                setOpen(false)
+                setSearch('')
+            }
+        }
+
+        document.addEventListener(
+            'mousedown',
+            handleOutsideClick,
+        )
+
+        return () => {
+            document.removeEventListener(
+                'mousedown',
+                handleOutsideClick,
+            )
+        }
+    }, [])
+
+    useEffect(() => {
+        if (open && !disabled) {
+            const timer = window.setTimeout(() => {
+                searchInputRef.current?.focus()
+            }, 50)
+
+            return () => {
+                window.clearTimeout(timer)
+            }
+        }
+    }, [open, disabled])
+
+    const filteredPlayers = useMemo(() => {
+        const query = search.trim().toLowerCase()
+
+        if (!query) {
+            return players
+        }
+
+        return players.filter((player) => {
+            const name =
+                player.name?.toLowerCase() || ''
+
+            const shortName =
+                player.shortName?.toLowerCase() || ''
+
+            const role =
+                player.role
+                    ?.replace(/_/g, ' ')
+                    .toLowerCase() || ''
+
+            return (
+                name.includes(query) ||
+                shortName.includes(query) ||
+                role.includes(query)
+            )
+        })
+    }, [players, search])
+
+    const getInitials = (player) => {
+        const name = player.name || 'Player'
+
+        const parts = name
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+
+        if (parts.length >= 2) {
+            return (
+                parts[0].charAt(0) +
+                parts[parts.length - 1].charAt(0)
+            ).toUpperCase()
+        }
+
+        return name.charAt(0).toUpperCase()
+    }
+
+    const handleSelect = (playerId) => {
+        if (disabled || loading) return
+
+        setOpen(false)
+        setSearch('')
+
+        onSelect(playerId)
+    }
+
+    return (
+        <div
+            ref={dropdownRef}
+            className="relative z-40"
+        >
+            {/* Trigger */}
+            <button
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                    if (disabled) return
+
+                    setOpen((previous) => !previous)
+                }}
+                className={[
+                    'flex h-11 w-full items-center gap-3 rounded-xl border bg-white px-3 text-left transition-all duration-200 dark:bg-slate-900',
+                    open
+                        ? 'border-brand-500 ring-2 ring-brand-500/20'
+                        : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600',
+                    disabled
+                        ? 'cursor-not-allowed opacity-60'
+                        : 'cursor-pointer',
+                ].join(' ')}
+            >
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+                    <UserPlus className="h-3.5 w-3.5" />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        {loading
+                            ? 'Adding player...'
+                            : 'Add player to squad'}
+                    </p>
+
+                    {!loading && (
+                        <p className="truncate text-[11px] text-slate-400">
+                            {players.length > 0
+                                ? `${players.length} player${players.length ===
+                                    1
+                                    ? ''
+                                    : 's'
+                                } available`
+                                : 'No players available'}
+                        </p>
+                    )}
+                </div>
+
+                <svg
+                    className={[
+                        'h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200',
+                        open
+                            ? 'rotate-180'
+                            : '',
+                    ].join(' ')}
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                >
+                    <path
+                        fillRule="evenodd"
+                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                        clipRule="evenodd"
+                    />
+                </svg>
+            </button>
+
+            {/* Dropdown */}
+            {open && !disabled && (
+                <div className="absolute inset-x-0 top-[calc(100%+8px)] z-[100] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30">
+                    {/* Search */}
+                    <div className="border-b border-slate-100 p-3 dark:border-slate-800">
+                        <div className="relative">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+                            <input
+                                ref={searchInputRef}
+                                type="search"
+                                value={search}
+                                onChange={(event) =>
+                                    setSearch(
+                                        event.target
+                                            .value,
+                                    )
+                                }
+                                placeholder="Search player..."
+                                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                            />
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between px-1">
+                            <span className="text-[11px] font-medium text-slate-400">
+                                Available players
+                            </span>
+
+                            <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                {filteredPlayers.length}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Player List */}
+                    <div className="max-h-64 overflow-y-auto p-2">
+                        {filteredPlayers.length === 0 ? (
+                            <div className="px-4 py-8 text-center">
+                                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400 dark:bg-slate-800">
+                                    <Search className="h-5 w-5" />
+                                </div>
+
+                                <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    No players found
+                                </p>
+
+                                <p className="mt-1 text-xs text-slate-400">
+                                    Try another name or
+                                    short name.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-1">
+                                {filteredPlayers.map(
+                                    (player) => {
+                                        const role =
+                                            player.role
+                                                ?.replace(
+                                                    /_/g,
+                                                    ' ',
+                                                )
+                                                .toLowerCase()
+
+                                        return (
+                                            <button
+                                                key={
+                                                    player._id
+                                                }
+                                                type="button"
+                                                onClick={() =>
+                                                    handleSelect(
+                                                        player._id,
+                                                    )
+                                                }
+                                                className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10"
+                                            >
+                                                {/* Avatar */}
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-600 transition-colors group-hover:bg-brand-100 group-hover:text-brand-700 dark:bg-slate-800 dark:text-slate-300 dark:group-hover:bg-brand-500/20 dark:group-hover:text-brand-300">
+                                                    {getInitials(
+                                                        player,
+                                                    )}
+                                                </div>
+
+                                                {/* Player Info */}
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex min-w-0 items-center gap-2">
+                                                        <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                                            {
+                                                                player.name
+                                                            }
+                                                        </p>
+
+                                                        {player.shortName && (
+                                                            <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                                                {
+                                                                    player.shortName
+                                                                }
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {role && (
+                                                        <p className="mt-0.5 truncate text-[11px] capitalize text-slate-400">
+                                                            {
+                                                                role
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {/* Add */}
+                                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-300 transition-colors group-hover:bg-brand-500 group-hover:text-white dark:text-slate-600">
+                                                    <Plus className="h-4 w-4" />
+                                                </div>
+                                            </button>
+                                        )
+                                    },
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
     )
 }
 

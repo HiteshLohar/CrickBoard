@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+
 import {
     ArrowLeft,
     Check,
@@ -103,68 +104,95 @@ function MatchSetup() {
     }, [matchId])
 
     useEffect(() => {
-        if (!match || teams.length === 0) {
-            return
+        const handleTeamsUpdated = async (event) => {
+            if (event.key !== 'crickboard-teams-updated') {
+                return
+            }
+
+            try {
+                const response = await getTeams()
+
+                if (response.success) {
+                    setTeams(response.data || [])
+                    setError('')
+                    setSuccessMessage('Team data refreshed.')
+                }
+            } catch {
+                // Keep existing team data if refresh fails.
+            }
         }
 
-        const teamAId =
-            typeof match.teamA === 'string'
-                ? match.teamA
-                : match.teamA?._id
-
-        const teamBId =
-            typeof match.teamB === 'string'
-                ? match.teamB
-                : match.teamB?._id
-
-        const teamA = teams.find(
-            (team) => team._id === teamAId,
+        window.addEventListener(
+            'storage',
+            handleTeamsUpdated,
         )
 
-        const teamB = teams.find(
-            (team) => team._id === teamBId,
-        )
-
-        if (teamA) {
-            setMatch((previous) => ({
-                ...previous,
-                teamA: {
-                    ...previous.teamA,
-                    ...teamA,
-                },
-            }))
+        return () => {
+            window.removeEventListener(
+                'storage',
+                handleTeamsUpdated,
+            )
         }
+    }, [])
 
-        if (teamB) {
-            setMatch((previous) => ({
-                ...previous,
-                teamB: {
-                    ...previous.teamB,
-                    ...teamB,
-                },
-            }))
-        }
-    }, [match, teams])
 
     const handlePlayingXIChange = (playerId, team) => {
+        setError('')
+
         if (team === 'A') {
-            setTeamAPlayers((previous) =>
-                previous.includes(playerId)
-                    ? previous.filter(
-                        (id) => id !== playerId,
-                    )
-                    : [...previous, playerId],
-            )
+            if (teamAPlayers.includes(playerId)) {
+                setTeamAPlayers((previous) =>
+                    previous.filter((id) => id !== playerId),
+                )
+                return
+            }
+
+            if (teamBPlayers.includes(playerId)) {
+                const player = teamB?.players?.find(
+                    (item) => (item._id || item) === playerId,
+                )
+
+                setError(
+                    `${player?.name || 'This player'} is already selected in ${teamB?.name || 'Team B'
+                    }. Please select another player for ${teamA?.name || 'Team A'
+                    }.`,
+                )
+
+                return
+            }
+
+            setTeamAPlayers((previous) => [
+                ...previous,
+                playerId,
+            ])
         }
 
         if (team === 'B') {
-            setTeamBPlayers((previous) =>
-                previous.includes(playerId)
-                    ? previous.filter(
-                        (id) => id !== playerId,
-                    )
-                    : [...previous, playerId],
-            )
+            if (teamBPlayers.includes(playerId)) {
+                setTeamBPlayers((previous) =>
+                    previous.filter((id) => id !== playerId),
+                )
+                return
+            }
+
+            if (teamAPlayers.includes(playerId)) {
+                const player = teamA?.players?.find(
+                    (item) => (item._id || item) === playerId,
+                )
+
+                setError(
+                    `${player?.name || 'This player'} is already selected in ${teamA?.name || 'Team A'
+                    }. Please select another player for ${teamB?.name || 'Team B'
+                    }.`,
+                )
+
+                return
+            }
+
+            setTeamBPlayers((previous) => [
+                ...previous,
+                playerId,
+            ])
         }
     }
 
@@ -370,10 +398,10 @@ function MatchSetup() {
 
                         <button
                             type="button"
-                            onClick={() =>
-                                navigate('/matches')
-                            }
-                            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+                            onClick={() => {
+                                window.location.href = '/matches'
+                            }}
+                            className="inline-flex w-fit items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-700"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Matches
@@ -384,8 +412,23 @@ function MatchSetup() {
         )
     }
 
-    const teamA = match?.teamA
-    const teamB = match?.teamB
+    const teamAId =
+        typeof match?.teamA === 'string'
+            ? match.teamA
+            : match?.teamA?._id
+
+    const teamBId =
+        typeof match?.teamB === 'string'
+            ? match.teamB
+            : match?.teamB?._id
+
+    const teamA =
+        teams.find((team) => team._id === teamAId) ||
+        match?.teamA
+
+    const teamB =
+        teams.find((team) => team._id === teamBId) ||
+        match?.teamB
 
     const teamASelected =
         teamAPlayers.length === match.playersPerTeam
@@ -519,6 +562,8 @@ function MatchSetup() {
                                 onPlayerChange={
                                     handlePlayingXIChange
                                 }
+                                otherTeam={teamB}
+                                otherTeamSelectedPlayers={teamBPlayers}
                             />
 
                             <PlayerSelectionCard
@@ -529,6 +574,8 @@ function MatchSetup() {
                                 onPlayerChange={
                                     handlePlayingXIChange
                                 }
+                                otherTeam={teamA}
+                                otherTeamSelectedPlayers={teamAPlayers}
                             />
                         </div>
 
@@ -896,10 +943,30 @@ function PlayerSelectionCard({
     teamCode,
     requiredPlayers,
     onPlayerChange,
+    otherTeam,
+    otherTeamSelectedPlayers,
 }) {
     const players = team?.players || []
+
     const completed =
         selectedPlayers.length === requiredPlayers
+
+    const availablePlayersToSelect = players.filter((player) => {
+        const playerId = player._id || player
+
+        return (
+            !selectedPlayers.includes(playerId) &&
+            !otherTeamSelectedPlayers.includes(playerId)
+        )
+    }).length
+
+    const maximumPossibleSelection =
+        selectedPlayers.length + availablePlayersToSelect
+
+    const additionalPlayersNeeded = Math.max(
+        0,
+        requiredPlayers - maximumPossibleSelection,
+    )
 
     return (
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -916,6 +983,23 @@ function PlayerSelectionCard({
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {players.length} squad players
                             </p>
+                            {additionalPlayersNeeded > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        window.open(
+                                            `/teams?excludeTeam=${team?._id}&excludePlayers=${otherTeamSelectedPlayers.join(',')}#team-${team?._id}`,
+                                            '_blank',
+                                        )
+                                    }}
+                                    className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-2.5 py-1.5 text-[11px] font-black text-amber-700 transition hover:bg-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:hover:bg-amber-950/60"
+                                >
+                                    <Users className="h-3.5 w-3.5" />
+
+                                    Add {additionalPlayersNeeded} player
+                                    {additionalPlayersNeeded > 1 ? 's' : ''}
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -938,7 +1022,10 @@ function PlayerSelectionCard({
                         player._id || player
 
                     const selected =
-                        selectedPlayers.includes(
+                        selectedPlayers.includes(playerId)
+
+                    const selectedInOtherTeam =
+                        otherTeamSelectedPlayers.includes(
                             playerId,
                         )
 
@@ -956,7 +1043,9 @@ function PlayerSelectionCard({
                                 'group flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-all duration-200',
                                 selected
                                     ? 'border-emerald-300 bg-emerald-50 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/30'
-                                    : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700',
+                                    : selectedInOtherTeam
+                                        ? 'border-amber-300 bg-amber-50/70 dark:border-amber-800 dark:bg-amber-950/20'
+                                        : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700',
                             ].join(' ')}
                         >
                             <div
@@ -964,7 +1053,9 @@ function PlayerSelectionCard({
                                     'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-black transition',
                                     selected
                                         ? 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-slate-950'
-                                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+                                        : selectedInOtherTeam
+                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
                                 ].join(' ')}
                             >
                                 {selected ? (
@@ -979,8 +1070,7 @@ function PlayerSelectionCard({
 
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
-                                    {player.name ||
-                                        player}
+                                    {player.name || player}
                                 </p>
 
                                 {player.role && (
@@ -988,6 +1078,16 @@ function PlayerSelectionCard({
                                         {player.role}
                                     </p>
                                 )}
+
+                                {selectedInOtherTeam &&
+                                    !selected && (
+                                        <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                                            <span>⚠</span>
+                                            Already selected in{' '}
+                                            {otherTeam?.name ||
+                                                'other team'}
+                                        </p>
+                                    )}
                             </div>
 
                             <div
@@ -995,7 +1095,9 @@ function PlayerSelectionCard({
                                     'h-5 w-5 rounded-full border-2 transition',
                                     selected
                                         ? 'border-emerald-500 bg-emerald-500'
-                                        : 'border-slate-300 dark:border-slate-600',
+                                        : selectedInOtherTeam
+                                            ? 'border-amber-400 dark:border-amber-500'
+                                            : 'border-slate-300 dark:border-slate-600',
                                 ].join(' ')}
                             />
                         </button>

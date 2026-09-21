@@ -125,11 +125,11 @@ export const createMatch = async ({
   // 6. playersPerTeam must match both teams
   // --------------------------------------------------
   if (
-    playersPerTeam !== teamAPlayerCount ||
-    playersPerTeam !== teamBPlayerCount
+    teamAPlayerCount < playersPerTeam ||
+    teamBPlayerCount < playersPerTeam
   ) {
     throw createError(
-      `Players per team must match both teams. Team A has ${teamAPlayerCount} players and Team B has ${teamBPlayerCount} players.`,
+      `Each team must have at least ${playersPerTeam} players. Team A has ${teamAPlayerCount} and Team B has ${teamBPlayerCount}.`,
       400
     );
   }
